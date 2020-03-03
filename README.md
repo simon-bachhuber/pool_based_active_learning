@@ -9,7 +9,7 @@
   - MeanDistanceSampling
   - QueryByCommittee
   - RepresentativeSampling
-- QueryStrategy objects that combine QueryStrategy objects
+- QueryStrategy object that uses a committee of QueryStrategy objects 
   - RankSampling
   - ActiveLearningByLearning
   - DynamicEnsembleActiveLearning
@@ -30,10 +30,10 @@ clf = SVM()
 
 # Instantiate query strategy
 from query_strategies import UncertaintySampling
-US = UncertaintySampling(data, clf)
+us = UncertaintySampling(data, clf)
 
 # Obtain entry id of sample to label next
-idx = US.make_query()
+idx = us.make_query()
 
 # Add label to data
 data.update(idx, label)
@@ -62,13 +62,13 @@ clf = SVM(kernel = 'linear', gamma = 15, random_state = 1)
 
 # Instantiate query strategies
 from query_strategies import RandomSampling, UncertaintySampling
-RS = RandomSampling(data_train1)
-US = UncertaintySampling(data_train2)
+rs = RandomSampling(data_train1)
+us = UncertaintySampling(data_train2)
 
 # Make queries and update data
-idx = RS.make_query()
+idx = rs.make_query()
 data_train1.update(idx, y[idx])
-idx = US.make_query()
+idx = us.make_query()
 data_train2.update(idx, y[idx])
 
 # Train and score
