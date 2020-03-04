@@ -35,6 +35,7 @@ us = UncertaintySampling(data, model = clf)
 # Obtain entry id of sample to label next
 idx = us.make_query()[0] 
 
+
 # Add label to data
 data.update(idx, label)
 
