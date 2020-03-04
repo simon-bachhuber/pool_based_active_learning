@@ -1,5 +1,11 @@
 # pool_based_active_learning
 
+## Installation
+Run in Terminal
+```
+pip install git+https://github.com/SimiPixel/pool_based_active_learning.git
+```
+
 ## Available Query strategies
 - QueryStrategy objects
   - RandomSampling
@@ -127,7 +133,7 @@ But what if we want to use a Multi-layer Perceptron classifier ..
 from sklearn.neural_network import MLPClassifier
 
 # Import the Model class
-from poolAL.query_strategies.core import Model 
+from poolAL.query_strategies.core import Model
 # or
 from poolAL.query_strategies.core.models.model import Model
 
