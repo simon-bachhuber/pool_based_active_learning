@@ -1,20 +1,10 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[14]:
-
-
 from .model import Model
-from sklearn.svm import SVC
+from sklearn.ensemble import RandomForestClassifier
 
-
-# In[12]:
-
-
-class SVM(Model):
+class RFC(Model):
     
     def __init__(self, *args, **kwargs):
-        self.model = SVC(probability = True, *args, **kwargs)
+        self.model = RandomForestClassifier(*args, **kwargs)
         
     def train(self, dataset):
         X, y = dataset.get_labeled_entries()
@@ -29,10 +19,3 @@ class SVM(Model):
     def score(self, dataset):
         X, y = dataset.get_labeled_entries()
         return self.model.score(X, y)
-
-
-# In[ ]:
-
-
-
-
