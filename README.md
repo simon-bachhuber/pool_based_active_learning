@@ -41,6 +41,7 @@ data.update(idx, label)
 ```
 
 ## Comparing query strategies
+### Manually
 ```python
 # Import Iris dataset and shuffle it
 from sklearn.datasets import load_iris
@@ -78,7 +79,36 @@ clf.train(data_train2)
 score2 = clf.score(data_test)
 
 # Iterate until all samples are labeled and take the mean of several runs 
-# Plot of average of 200 runs below
+
+```
+### Automated
+```python
+from evaluate.calc_score import Scorer
+from query_strategies import RandomSampling, ClusterMarginSampling, UncertaintySampling
+from query_strategies.core import SVM
+
+# Instantiate classifier
+clf = SVM(kernel = 'linear', gamma = 15, random_state = 1)
+
+# Declare query strategies and their respective keyword arguments
+qs = [RandomSampling, ClusterMarginSampling, UncertaintySampling]
+qs_kwargs = [{}, {'space': 'full'}, {'mode': clf}]
+
+# Declare parameters
+X, y = load_iris(return_X_y = True)
+
+# Number of labels to start with
+n_labels_start = 3
+# Number of labels to end
+n_labels_end = 100
+# Number of classes present in initial labels
+n_unique_labels = 3
+# Number of runs for averaging
+n_runs = 200
+
+test_scores = Scorer(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_unique_labels)
+
+# Plot of test_scores below
 
 ```
 
