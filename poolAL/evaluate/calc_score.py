@@ -13,20 +13,34 @@ def CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_
     Parameters
     ----------
 
-    X: {np.array}
+    X: {np.array} of shape (n_samples, n_features)
+        Input data
     y: {list}
-    qs: {list} of QueryStrategy objects
+        labels
+    qs: {list} of poolAL.query_strategies.core.query_strategy.QueryStrategy objects
+        List of query strategies that should be used
     qs_kwargs: {list} of Dictionaries
-    clf: {Model}
+        Each query strategies repspective kwargs
+    clf: {poolAL.query_strategies.core.models.model.Model}
+        The classifier used to calculate the test scores
     n_labels_start: {int}
+        Number of initially available labels
     n_labels_end: {int}
+        Number of labels when finished
     n_runs: {int}
+        Number of runs for averaging
     n_unique_labels_start: {int}
+        Number of unique labels in initial labels
 
 
     Returns
     -------
-    np.array of shape (n_query_strategies, n_labels, 2)
+    {np.array} of shape (len(qs), n_labels_end-n_labels_start, 2)
+        Mean test score calculated on the remaining samples. So n_test_samples = len(X)-n_labels_end.
+        Axis 0 is the different query strategies
+        Axis 1 is the different number of labels
+        Axis 2 is of the form (current_n_labels, current_test_score)
+        
 
     '''
     # Number of query strategies
@@ -51,7 +65,7 @@ def CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_
             clear_output(wait = True)
             print('Progress:',round((i+1)/n_runs*100,3),'%')
             print('Finished in approximately',(t2/60/i)*(n_runs-i),'minutes.')
-            
+
         # Shuffle until every class is present in initial data
         escape = 0
         while True:

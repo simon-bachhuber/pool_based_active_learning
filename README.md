@@ -97,7 +97,7 @@ clf = SVM(kernel = 'linear', gamma = 15, random_state = 1)
 
 # Declare query strategies and their respective keyword arguments
 qs = [RandomSampling, ClusterMarginSampling, UncertaintySampling]
-qs_kwargs = [{}, {'space': 'full'}, {'mode': clf}]
+qs_kwargs = [{}, {'space': 'full'}, {'model': clf}]
 
 # Declare parameters
 X, y = load_iris(return_X_y = True)
@@ -111,7 +111,7 @@ n_unique_labels = 3
 # Number of runs for averaging
 n_runs = 200
 
-test_scores = Scorer(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_unique_labels)
+test_scores = CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_unique_labels)
 
 # Plot of test_scores below
 
