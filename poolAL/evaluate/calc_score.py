@@ -19,6 +19,10 @@ def CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_
         labels
     qs: {list} of poolAL.query_strategies.core.query_strategy.QueryStrategy objects
         List of query strategies that should be used
+        NOTE: If a committee QueryStrategy is included in qs, then the repspective kwargs dictionary in
+        qs_kwargs must include key 'query_strategy'. Its value must be a tuple of the form:
+        ({list} of QueryStrategy objects, {list} of kwargs-Dictionaries)
+        For example see bottom.
     qs_kwargs: {list} of Dictionaries
         Each query strategies repspective kwargs
     clf: {poolAL.query_strategies.core.models.model.Model}
@@ -40,7 +44,22 @@ def CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_
         Axis 0 is the different query strategies
         Axis 1 is the different number of labels
         Axis 2 is of the form (current_n_labels, current_test_score)
-        
+
+
+    Example
+    -------
+
+    X, y = load_iris(return_X_y=True)
+    y = y.tolist()
+    clf = SVM(kernel = 'linear', random_state = 1)
+
+    deal_qs = [ClusterMarginSampling, UncertaintySampling]
+    deal_qs_kwargs = [{'space':'full'}, {'model': clf}]
+
+    qs = [RandomSampling, ClusterMarginSampling, UncertaintySampling, DynamicEnsembleActiveLearning]
+    qs_kwargs = [{}, {'space':'full'}, {'model': clf}, {'query_strategy': (deal_qs, deal_qs_kwargs), 'model': clf, 'T':97}]
+
+    CalcScore(X, y, qs, qs_kwargs, clf, 3, 100, 200, 3)
 
     '''
     # Number of query strategies
@@ -87,8 +106,18 @@ def CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_
 
         # Instantiate query strategies
         qs_inst = []
-        for p in range(N):
-            qs_inst.append(qs[p](data_train[p], **qs_kwargs[p]))
+        for j in range(N):
+
+            # Instantiate the query_strategy list for Committee's
+            if 'query_strategy' in qs_kwargs[j]:
+                temp_kwargs = copy.deepcopy(qs_kwargs[j])
+                tup = temp_kwargs.pop('query_strategy')
+                committee_qs_inst = [tup[0][x](data_train[j], **tup[1][x]) for x in range(len(tup[0]))]
+                temp_kwargs.update({'query_strategy': committee_qs_inst})
+                qs_inst.append(qs[j](data_train[j], **temp_kwargs))
+
+            else:
+                qs_inst.append(qs[j](data_train[j], **qs_kwargs[j]))
 
 
         for j in range(n_labels):
