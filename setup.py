@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
 name='poolAL',
-version = '0.1.4',
+version = '0.1.5',
 description = 'A pool-based active learner',
 url = 'https://github.com/SimiPixel/pool_based_active_learning',
 author = 'Simon Bachhuber',
