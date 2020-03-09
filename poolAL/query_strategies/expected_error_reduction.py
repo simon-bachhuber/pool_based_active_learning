@@ -89,6 +89,11 @@ class ExpectedErrorReduction(QueryStrategy):
 
 
     def make_query(self, size = 1):
+
+        ## quit if nr_unlabeled_samples = 1
+        if self.dataset.len_unlabeled() == 1:
+            return self.dataset.get_unlabeled_entries()[0][0]
+
         ## Set the possible labels
         self.possible_labels = list(set(self.dataset.get_labeled_entries()[1]))
 
@@ -122,7 +127,7 @@ class ExpectedErrorReduction(QueryStrategy):
         ## Sort it
         results = sort_by_2nd(total, 'min')
 
-        return results[:size].astype(int)
+        return results[:size,0].astype(int)
 
     def confidence(self):
         pass
