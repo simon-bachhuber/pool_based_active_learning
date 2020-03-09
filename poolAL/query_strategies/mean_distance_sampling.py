@@ -34,17 +34,17 @@ class MeanDistanceSampling(QueryStrategy):
         default = 'unlabeled'
 
     epsilon: {float}, (0,1]
-        Greediness parameter. Amount in % of samples out of space to use for calculating mean distances. 
+        Greediness parameter. Amount in % of samples out of space to use for calculating mean distances.
         default = 1
-        
+
     metric: {fkt}
         Function that returns the distance between two sample points.
 
     Methods
     -------
 
-    .make_query(size = 1): Returns size number of entry ids to query. 
-        default = 1 
+    .make_query(size = 1): Returns size number of entry ids to query.
+        default = 1
     '''
 
     def __init__(self, dataset, **kwargs):
@@ -63,15 +63,18 @@ class MeanDistanceSampling(QueryStrategy):
         if self.space not in ['labeled', 'unlabeled', 'all']:
             raise ValueError('space parameter is no valid option')
 
+        # Calc two point distance matrix
+        self.dist_matrix = self._calc_dist_matrix()
+
     def confidence(self):
         pass
 
     def make_query(self, size = 1):
-        
+
         ## Stop when no more unlabeled samples
         if self.dataset.len_unlabeled() == 0:
-            raise IterationError('Every sample in dataset is labeled')
-        
+            raise ValueError('Every sample in dataset is labeled')
+
         # Obtain the correct space
         # space is going to be the ids of all unlabeld, labeled or just all samples
         if self.space == 'labeled':
@@ -80,34 +83,49 @@ class MeanDistanceSampling(QueryStrategy):
             space, _ = self.dataset.get_unlabeled_entries()
         elif self.space == 'all':
             space = np.array([x for x in range(self.dataset.__len__())])
-            
+
         if self.epsilon is not 1:
             # Shrink the respective space in greedy strategy
             greedy_nr = round(self.epsilon*len(space))
             space = np.random.choice(space, size = greedy_nr, replace = False)
-        
+
         ## Get all unlabeled ids
         unlabeled_ids, _ = self.dataset.get_unlabeled_entries()
-        
+
         ## Calculate the mean distance
         dist_matrix = np.zeros((len(unlabeled_ids), 2))
-        
-        ## Iteration 
+
+        ## Iteration
         nr = 0
         for idx in unlabeled_ids:
             ## Save the id in the dist_matrix
             dist_matrix[nr, 0] = idx
             for space_idx in space:
-                dist = self.metric(self.dataset._X[idx], self.dataset._X[space_idx])
+                dist = self.dist_matrix[idx, space_idx]
                 dist_matrix[nr, 1] += dist
             nr += 1
-            
+
         ## Take the mean
         dist_matrix[:, 1] = dist_matrix[:, 1]/len(space)
-        
+
         ## Rank/Sort
         if self.goal == 'high':
             return sort_by_2nd(dist_matrix, 'max')[:size, 0].astype(int)
         elif self.goal == 'low':
             return sort_by_2nd(dist_matrix, 'min')[:size, 0].astype(int)
 
+    def _calc_dist_matrix(self):
+        X = self.dataset.get_entries()[0]
+
+        ## number of total samples
+        l = len(X)
+
+        ## Calc the distance between all pairs possible. Note: two point distance matrix is SYMMETRIC
+        m = np.zeros((l, l))
+        for i in range(l):
+            for j in range(i):
+                d = self.metric(X[i], X[j])
+                m[i,j] = d
+                m[j,i] = d
+
+        return m
