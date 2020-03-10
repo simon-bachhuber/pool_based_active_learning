@@ -16,8 +16,8 @@ import numpy as np
 
 class DynamicEnsembleActiveLearning(QueryStrategy):
     '''
-    A QueryStrategy object designed to adaptively manage the advice of different underlying QueryStrategy objects. 
-    In the context of Multi armed bandit problems, the bandit has the choice of K arms being the unlabeled sample and receiving a reward after the queried sample is labeled. 
+    A QueryStrategy object designed to adaptively manage the advice of different underlying QueryStrategy objects.
+    In the context of Multi armed bandit problems, the bandit has the choice of K arms being the unlabeled sample and receiving a reward after the queried sample is labeled.
     The N experts (active learners) each give their vote for every action and the total vote for a certain action/arm is the sum of votes weighted by the experts respective weight/saying.
     After receiving the reward the weight of every expert gets updated proporional to their respective vote in that action - several experts may have adviced the same arm.
     Then the next round starts ..
@@ -41,12 +41,12 @@ class DynamicEnsembleActiveLearning(QueryStrategy):
     alpha: float, hyperparameter for Gibbs measure (default=0.1)
 
     beta: float, hyperparameter for Gibbs measure (default=100)
-    
-    
+
+
     Attributes
     ----------
-    .reward: {float}, Last IWAcc
-    
+    .past_reward: {float}, Last IWAcc
+
     .rexp4.weights: {np.array}, shape = (n_experts)
         Weights of the individual experts
 
@@ -86,13 +86,13 @@ class DynamicEnsembleActiveLearning(QueryStrategy):
         ## Sanity checks
         if not isinstance(self.model, Model):
             raise TypeError('Your model must be of type Model')
-            
+
         ## Fit it once
         self.model.train(self.dataset)
 
         ## Learning rate
         self.gamma = kwargs.pop('gamma', 0.1)
-        
+
         ## Maximal number of iterations
         self.T = kwargs.pop('T', None)
         if self.T is None:
@@ -117,9 +117,9 @@ class DynamicEnsembleActiveLearning(QueryStrategy):
             alpha = self.alpha,
             beta = self.beta
         )
-        
+
         ## Cache for last reward
-        self.last_reward = None
+        self.past_reward = None
 
     def reward(self):
         '''
@@ -135,11 +135,11 @@ class DynamicEnsembleActiveLearning(QueryStrategy):
         K = self.dataset.len_unlabeled()+1
         ## Number of queries before
         l = len(self.queried_hist)
-        
+
         for i in range(l):
             ## Number of arms at that past history point
             K_hist = K+l-i
-            
+
             idx = self.queried_hist[i]
             X, y = self.dataset.__getitem__(idx)
             X = np.array([X])
@@ -158,22 +158,22 @@ class DynamicEnsembleActiveLearning(QueryStrategy):
         else:
             reward = self.reward()
             last_idx = self.queried_hist[-1]
-            
+
         ## Receive probabilities for drawing
         query_vector = self.rexp4._next(reward, last_idx)
 
         ## Draw next idx
         next_idx = np.random.choice(self.rexp4.n, p=query_vector)
-        
+
         ## Save reward
-        self.last_reward = reward
+        self.past_reward = reward
 
         ## Append to history
         self.queried_hist.append(next_idx)
         self.queried_hist_w.append(1/query_vector[next_idx])
 
         return next_idx
-    
+
     def confidence(self):
         pass
 
@@ -189,10 +189,10 @@ class REXP4(object):
         self.alpha = kwargs.pop('alpha')
         self.beta = kwargs.pop('beta')
         self._gen = self._gen()
-        
+
         ## Number of experts
         self.N = len(self.experts)
-        
+
         ## Cache for weights
         self.weights = None
 
@@ -208,7 +208,7 @@ class REXP4(object):
     def _gen(self):
         ## Initialize weights
         w = np.ones(self.N)
-        
+
         ## iteration counter for reset mechanism
         count = 1
 
@@ -217,13 +217,13 @@ class REXP4(object):
             if count > self.delta_T:
                 w = np.ones(self.N)
                 count = 1
-            
+
             ## Write weight into cache
             self.weights = w
-            
+
             ## Number of arms
             K = self.experts[0].dataset.len_unlabeled()
-            
+
             ## Now every expert casts his votes / gives his ranking (order which to query first)
             score_vector = np.zeros(self.n)
 
@@ -247,13 +247,13 @@ class REXP4(object):
                 for n2 in range(self.n):
                     if score_vector[n1, n2] not in [0]:
                         score_vector[n1, n2] = np.exp(-self.beta * score_vector[n1, n2])
-            
+
             ## Normalisation w.r.t. actions
             advice_vector = np.array([score_vector[x,:]/np.sum(score_vector[x,:]) for x in range(self.N)])
 
             ## Calculate total probabilities p for every action
             W = np.sum(w)
-            p = (1- self.gamma) * np.dot(w, advice_vector)/W 
+            p = (1- self.gamma) * np.dot(w, advice_vector)/W
             for i in range(self.n):
                 if p[i] not in [0]:
                     p[i] += self.gamma/K
@@ -273,7 +273,3 @@ class REXP4(object):
 
             ## Increase counter
             count += 1
-
-
-            
-
