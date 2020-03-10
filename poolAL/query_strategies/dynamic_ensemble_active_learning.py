@@ -40,7 +40,7 @@ class DynamicEnsembleActiveLearning(QueryStrategy):
 
     alpha: float, hyperparameter for Gibbs measure (default=0.1)
 
-    beta: float, hyperparameter for Gibbs measure (default=100)
+    beta: float, hyperparameter for Gibbs measure (default=10)
 
 
     Attributes
@@ -103,7 +103,7 @@ class DynamicEnsembleActiveLearning(QueryStrategy):
 
         ## Gibbs parameters
         self.alpha = kwargs.pop('alpha', 0.1)
-        self.beta = kwargs.pop('beta', 100)
+        self.beta = kwargs.pop('beta', 10)
 
         ## Queried history
         self.queried_hist = None
