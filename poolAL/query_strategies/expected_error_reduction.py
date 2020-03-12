@@ -92,7 +92,7 @@ class ExpectedErrorReduction(QueryStrategy):
 
         ## quit if nr_unlabeled_samples = 1
         if self.dataset.len_unlabeled() == 1:
-            return int(self.dataset.get_unlabeled_entries()[0][0])
+            return self.dataset.get_unlabeled_entries()[0].astype(int)
 
         ## Set the possible labels
         self.possible_labels = list(set(self.dataset.get_labeled_entries()[1]))
