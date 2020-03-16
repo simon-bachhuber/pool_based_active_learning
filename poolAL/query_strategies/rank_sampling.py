@@ -26,7 +26,7 @@ class RankSampling(QueryStrategy):
         The list of QueryStrategy objects that contributes in the ranking
 
     ranking: {string}, either 'linear' or 'exponential'
-        The scaling of the ranking before it is summed up. 
+        The scaling of the ranking before it is summed up.
         E.g. Given two QS's with 'linear' the combination rank 1 and rank 6 is just as good as rank 2 and rank 5.
         With 'exponential' rank 1 and rank 6 will win usually. (depending on alpha)
         default = 'linear'
@@ -43,11 +43,11 @@ class RankSampling(QueryStrategy):
 
     '''
 
-    def __init__(self, **kwargs):
+    def __init__(self, _ = None, **kwargs):
 
         # Setup the parameters
         self.qs = kwargs.pop('query_strategy', None)
-        
+
         self.ranking = kwargs.pop('ranking', 'linear')
 
         self.alpha = kwargs.pop('alpha', 0.1)
@@ -87,32 +87,31 @@ class RankSampling(QueryStrategy):
         ids_ranks = a[1:]
 
         # Sort them, the lower total rank the better
-        result = sort_by_2nd(ids_ranks, 'min')     
+        result = sort_by_2nd(ids_ranks, 'min')
 
         if _exact_results == 1:
             return result
         else:
             return result[:size, 0].astype(int)
-    
+
     def confidence(self):
         '''
         Returns
         -------
-        
+
         {np.array} of shape = (n_unlabeled, 2)
             [[entry_id, confidence in percentage],[...]]
         '''
         result = self.make_query(_exact_results = 1)
-        
+
         ## Exponential ranking, Gibbs measure
         if result[0,1] < 0:
             result[:, 1] = np.exp(-result[:,1]/self.alpha)
             result[:, 1] = result[:,1] / np.sum(result[:,1])
-            
+
         ## Linear ranking
         else:
             result[:, 1] = 1/result[:,1]
             result[:, 1] = result[:,1] / np.sum(result[:,1])
-            
-        return result
 
+        return result
