@@ -29,11 +29,11 @@ class RepresentativeSampling(QueryStrategy):
     Parameters
     ----------
 
-    max_min: {string}, either 'high' or 'low'
+    goal: {string}, either 'high' or 'low'
         Wether to return samples in a high or low density region
         default = 'high'
 
-    space: {string}, out of ['labeled', 'unlabeled', 'full']
+    space: {string}, out of ['labeled', 'unlabeled', 'all']
         The density of the samples in w.r.t. to a data space containing labeled, unlabeled or all samples
         default = 'unlabeled'
 
@@ -47,8 +47,8 @@ class RepresentativeSampling(QueryStrategy):
 
     Methods
     -------
-    
-    .make_query(size = 1): {np.array}, dtype = int, shape = (size) 
+
+    .make_query(size = 1): {np.array}, dtype = int, shape = (size)
         Returns the entry id's to query next
 
 
@@ -58,12 +58,12 @@ class RepresentativeSampling(QueryStrategy):
         super().__init__(dataset)
 
         ## Setting up parameters
-        self.max_min = kwargs.pop('max_min', 'high')
+        self.max_min = kwargs.pop('goal', 'high')
         if self.max_min not in ['high', 'low']:
             raise ValueError('max_min parameter is not a valid option')
 
         self.space = kwargs.pop('space', 'unlabeled')
-        if self.space not in ['unlabeled', 'labeled', 'full']:
+        if self.space not in ['unlabeled', 'labeled', 'all']:
             raise ValueError('space parameter is not a valid option')
 
         self.method = kwargs.pop('method', 'sphere')
@@ -74,11 +74,11 @@ class RepresentativeSampling(QueryStrategy):
 
         ## Initiate kMeans
         self.nr_of_clusters = self.dataset.get_num_of_labels()
-        
+
         if self.method == 'cluster':
             self.kMeans = KMeans(n_clusters = self.nr_of_clusters)
             self.kMeans.fit(self.dataset._X)
-            
+
         ## Initiate Sphere method
         if self.method == 'sphere':
             ## Calc distance matrix
@@ -124,31 +124,31 @@ class RepresentativeSampling(QueryStrategy):
         ## Adjust n_components if required
         nr = self.dataset.get_num_of_labels()
         nr_of_clusters_changed = False
-        
+
         if nr is not self.nr_of_clusters:
             self.nr_of_clusters = nr
             self.kMeans = KMeans(n_clusters= nr)
             nr_of_clusters_changed = True
 
         ## Fit the kMeans to the space if required
-        if self.space == 'full':
+        if self.space == 'all':
             X, _ = self.dataset.get_entries()
         elif self.space == 'unlabeled':
             _, X = self.dataset.get_unlabeled_entries()
         else:
             X, _ = self.dataset.get_labeled_entries()
 
-        if self.space == 'full' and nr_of_clusters_changed:
+        if self.space == 'all' and nr_of_clusters_changed:
             self.kMeans.fit(X)
         else:
             self.kMeans.fit(X)
-            
+
 
         ## Transform to cluster space
         X_ids, X = self.dataset.get_unlabeled_entries()
         X = self.kMeans.transform(X)
 
-        ## Zipit 
+        ## Zipit
         return zipit(X_ids, X)
 
     def _score_sphere(self):
@@ -156,7 +156,7 @@ class RepresentativeSampling(QueryStrategy):
         X_ids = self.dataset.get_unlabeled_entries()[0]
 
         ## Determine the space
-        if self.space =='full':
+        if self.space =='all':
             space_ids = np.arange(self.dataset.__len__())
             density = np.zeros(len(X_ids))
         elif self.space == 'unlabeled':
@@ -181,7 +181,7 @@ class RepresentativeSampling(QueryStrategy):
 
     def _calc_dist_matrix(self):
         X = self.dataset.get_entries()[0]
-        
+
         ## number of total samples
         l = len(X)
 
@@ -194,7 +194,7 @@ class RepresentativeSampling(QueryStrategy):
                 m[j,i] = d
 
         return m
-           
+
     def _calc_mean_dist(self):
         l = self.dist_matrix.shape[0]
         d = 0
@@ -210,7 +210,3 @@ class RepresentativeSampling(QueryStrategy):
 
 
 # In[ ]:
-
-
-
-
