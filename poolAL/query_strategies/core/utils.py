@@ -62,6 +62,8 @@ def manhattan_metric(a,b):
     distance: float
     '''
     d = 0.0
+    a, b = a.astype(float), b.astype(float)
+
     for i in range(len(a)):
         d += abs(a[i]-b[i])
     return d

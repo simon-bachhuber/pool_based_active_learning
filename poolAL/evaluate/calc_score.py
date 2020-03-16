@@ -99,7 +99,8 @@ def CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_
 
         # Create Datasets
         data_train = Dataset(X[:n_labels_end], y[:n_labels_start]+(n_labels_end-n_labels_start)*[None])
-        data_test = Dataset(X[n_labels_end:], y[n_labels_end:])
+        # Test pool is not larger than 300 samples
+        data_test = Dataset(X[n_labels_end:n_labels_end+300], y[n_labels_end:n_labels_end+300])
 
         # Create copies of trainings data
         data_train = [copy.deepcopy(data_train) for i in range(N)]
