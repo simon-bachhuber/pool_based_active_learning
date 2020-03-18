@@ -5,7 +5,7 @@
 
 
 from .core import QueryStrategy, Model, Dataset
-import import_ipynb
+#import import_ipynb
 from .core.utils import entropy, zipit, sort_by_2nd
 import numpy as np
 
