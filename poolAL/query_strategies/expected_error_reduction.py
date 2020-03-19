@@ -11,6 +11,7 @@ from .core import QueryStrategy, Model
 from .core.utils import zipit, entropy, sort_by_2nd
 import copy
 from pathos.multiprocessing import ProcessingPool as Pool
+import threading
 
 
 # In[ ]:
@@ -105,7 +106,7 @@ class ExpectedErrorReduction(QueryStrategy):
         pred = self.model.predict_proba(X) # pred.shape = (n_unlabeled, nr_of_labels)
 
         ## Setup pool for cpu parallelisation
-        p = Pool(12, maxtasksperchild = 1000)
+        p = Pool(threading.active_count(), maxtasksperchild = 1000)
 
         ## nr of unlabeled samples -> len(X)
 
