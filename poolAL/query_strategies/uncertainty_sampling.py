@@ -26,7 +26,7 @@ class UncertaintySampling(QueryStrategy):
         The Model to base your confidence on
         
     method: {string}, either 'lc', 'entropy' or 'margin'
-        default = 'lc'
+        default = 'entropy'
         
         Say p is class probability distro of one sample, then 
         
@@ -65,7 +65,7 @@ class UncertaintySampling(QueryStrategy):
             )
         self.model.train(self.dataset)
         
-        self.method = kwargs.pop('method', 'lc')
+        self.method = kwargs.pop('method', 'entropy')
         
         ## Sanity checks of method
         if self.method not in ['lc', 'entropy', 'margin']:
