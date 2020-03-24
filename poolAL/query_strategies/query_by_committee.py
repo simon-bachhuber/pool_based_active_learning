@@ -101,8 +101,11 @@ class QueryByCommittee(QueryStrategy):
     def _vote_entropy(self, size):
         X_ids, X = self.dataset.get_unlabeled_entries()
 
+        ## Maximum label Number
+        c = np.max(self.dataset.unique_labels())
+
         ## self.dataset.get_num_of_labels() is the number of distinct classes
-        votes = np.zeros((len(X), self.dataset.get_num_of_labels()))
+        votes = np.zeros((len(X), c+1))
 
         ## Train
         self.teach_committee()
