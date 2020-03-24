@@ -101,6 +101,16 @@ class Dataset(object):
         '''
         return (~self.get_labeled_mask()).sum()
 
+    def unique_labels(self):
+        '''
+        Array of unique labels
+
+        Returns:
+        --------
+        array of shape (n_classes)
+        '''
+        return np.unique(self._y[self.get_labeled_mask()])
+
     def get_num_of_labels(self):
         '''
         Number of distinct labels in object.
