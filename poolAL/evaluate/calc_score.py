@@ -5,7 +5,7 @@ import numpy as np
 import time
 from IPython.display import clear_output
 
-def CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_unique_labels_start):
+def CalcScore(_X, _y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_unique_labels_start, **kwargs):
     '''
     Calculates the mean score of a list of query strategies (or a single qs) given a budget of labels
 
@@ -62,6 +62,12 @@ def CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_
     CalcScore(X, y, qs, qs_kwargs, clf, 3, 100, 200, 3)
 
     '''
+
+    # Optionally fixing the random seed to make it perfectly reproducable
+    np.random.seed(kwargs.pop('random_state', None))
+    random_state = np.array([np.random.randint(0, 2**32, size = 100) for x in range(n_runs)])
+
+
     # Number of query strategies
     N = len(qs)
 
@@ -86,15 +92,15 @@ def CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_
             print('Finished in approximately',(t2/60/i)*(n_runs-i),'minutes.')
 
         # Shuffle until every class is present in initial data
-        escape = 0
+        escape = -1
         while True:
             escape += 1
-            X, y = shuffle(X, y)
+            X, y = shuffle(_X, _y, random_state = random_state[i, escape])
             if len(set(y[:n_labels_start])) >= n_unique_labels_start:
                 # Found a permutation
                 break
             # Raise Error if its too hard
-            if escape > 100:
+            if escape > 99:
                 raise Exception('Ensuring that enough classes are present initially is too hard')
 
         # Create Datasets
