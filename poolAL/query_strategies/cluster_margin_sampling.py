@@ -6,7 +6,7 @@
 
 # A query strategy aimed to find uncertain samples. Idea: Query samples that are in between two cluster centers, i.e., samples where kMeans clustering is most unsure of the samples cluster affinity.
 
-from sklearn.cluster import KMeans 
+from sklearn.cluster import KMeans
 from .core import QueryStrategy
 import numpy as np
 from .core.utils import zipit, sort_by_2nd
@@ -35,7 +35,7 @@ class ClusterMarginSampling(QueryStrategy):
         self.nr_of_clusters = self.dataset.get_num_of_labels()
 
         # kMeans algorithm
-        self.kMeans = KMeans(n_clusters = self.nr_of_clusters)
+        self.kMeans = KMeans(n_clusters = self.nr_of_clusters, random_state= 2)
         self.kMeans.fit(self.dataset._X)
 
     def make_query(self, size = 1):
@@ -73,4 +73,3 @@ class ClusterMarginSampling(QueryStrategy):
 
     def confidence(self):
         pass
-

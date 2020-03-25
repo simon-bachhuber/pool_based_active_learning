@@ -76,7 +76,7 @@ class RepresentativeSampling(QueryStrategy):
         self.nr_of_clusters = self.dataset.get_num_of_labels()
 
         if self.method == 'cluster':
-            self.kMeans = KMeans(n_clusters = self.nr_of_clusters)
+            self.kMeans = KMeans(n_clusters = self.nr_of_clusters, random_state= 2)
             self.kMeans.fit(self.dataset._X)
 
         ## Initiate Sphere method
