@@ -111,6 +111,17 @@ class Dataset(object):
         '''
         return np.unique(self._y[self.get_labeled_mask()])
 
+    def class_balance(self):
+        '''
+        Dictionary with number of samples of each class
+
+        Returns:
+        --------
+        dict of shape (label: n_samples_with_that_label, ..)
+        '''
+        a, b = np.unique(self._y[self.get_labeled_mask()], return_counts=True)
+        return dict(zip(a, b))
+
     def get_num_of_labels(self):
         '''
         Number of distinct labels in object.
