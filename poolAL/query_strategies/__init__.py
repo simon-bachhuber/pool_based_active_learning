@@ -8,3 +8,4 @@ from .expected_error_reduction import ExpectedErrorReduction
 from .cluster_margin_sampling import ClusterMarginSampling
 from .representative_sampling import RepresentativeSampling
 from .rank_sampling import RankSampling
+from .class_balance_sampling import ClassBalanceSampling
