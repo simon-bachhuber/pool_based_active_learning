@@ -11,6 +11,7 @@ pip install git+https://github.com/SimiPixel/pool_based_active_learning.git
   - RandomSampling
   - UncertaintySampling
   - ClusterMarginSampling
+  - ClassBalanceSampling
   - ExpectedErrorReduction
   - MeanDistanceSampling
   - QueryByCommittee
@@ -64,7 +65,7 @@ data_test = Dataset(X[100:], y[100:])
 
 # Instantiate classifier
 from poolAL.query_strategies.core import SVM
-clf = SVM(kernel = 'linear', gamma = 15, random_state = 1)
+clf = SVM(kernel = 'linear', random_state = 1)
 
 # Instantiate query strategies
 from poolAL.query_strategies import RandomSampling, UncertaintySampling
@@ -88,12 +89,12 @@ score2 = clf.score(data_test)
 ```
 ### Automated
 ```python
-from poolAL.evaluate import CalcScore
+from poolAL.evaluate import CalcScore, CalcScoreParallel
 from poolAL.query_strategies import RandomSampling, ClusterMarginSampling, UncertaintySampling
 from poolAL.query_strategies.core import SVM
 
 # Instantiate classifier
-clf = SVM(kernel = 'linear', gamma = 15, random_state = 1)
+clf = SVM(kernel = 'linear', random_state = 1)
 
 # Declare query strategies and their respective keyword arguments
 qs = [RandomSampling, ClusterMarginSampling, UncertaintySampling]
@@ -113,6 +114,7 @@ n_runs = 200
 
 test_scores = CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_unique_labels)
 
+# CalcScoreParallel instead of CalcScore for a cpu-parallized version 
 # Plot of test_scores below
 
 ```
