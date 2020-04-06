@@ -4,7 +4,29 @@ from .core.utils import zipit, sort_by_2nd
 
 class ClassBalanceSampling(QueryStrategy):
     '''
-    Query strategy that tries to query samples that are likely to balance the training dataset the best in terms of class ratios.
+    Query strategy that tries to query samples that are likely to balance the training dataset
+    the best in terms of class ratios.
+
+    Parameters
+    ----------
+    dataset: {poolAL.query_strategies.core.Dataset}
+        The dataset.
+
+    model: {poolAL.query_strategies.core.Model}
+        The model used to estimate class probabilities
+
+
+    Methods
+    -------
+    .make_query(size = 1)
+        Returns: {np.array} of shape = (size, dtype = int)
+            size number of entry ids to be queried
+
+    .confidence()
+        Returns: {np.array} of shape = (n_unlabeled_samples, 2)
+            The confidence in every entry id to be queried next.
+
+
     '''
 
     def __init__(self, dataset, **kwargs):
