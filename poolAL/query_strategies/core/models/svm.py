@@ -17,6 +17,7 @@ class SVM(Model):
     '''
     def __init__(self, *args, **kwargs):
         self.model = SVC(probability = kwargs.pop('probability', True), *args, **kwargs)
+        self.supports_prob = hasattr(self.model, 'predict_proba')
 
     def train(self, dataset):
         X, y = dataset.get_labeled_entries()
@@ -28,9 +29,11 @@ class SVM(Model):
     def predict(self, feature):
         return self.model.predict(feature)
 
-    if hasattr(self.model, 'predict_proba'):
-        def predict_proba(self, feature):
+    def predict_proba(self, feature):
+        if self.supports_prob:
             return self.model.predict_proba(feature)
+        else:
+            raise Exception('Called predict_proba while probability is False')
 
     def score(self, dataset):
         X, y = dataset.get_labeled_entries()
