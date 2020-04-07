@@ -124,7 +124,7 @@ class UncertaintySampling(QueryStrategy):
 
             if self.method =='margin':
                 dist = np.sort(dist)
-                return zipit(unlabeled_ids, np.array([e[-1]-e[-2] for e in pred]))
+                return zipit(unlabeled_ids, np.array([e[-1]-e[-2] for e in dist]))
 
     def confidence(self):
         pass
