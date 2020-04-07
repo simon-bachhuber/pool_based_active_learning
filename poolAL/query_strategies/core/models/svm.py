@@ -1,14 +1,5 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[14]:
-
-
 from .model import Model
 from sklearn.svm import SVC
-
-
-# In[12]:
 
 
 class SVM(Model):
@@ -17,7 +8,10 @@ class SVM(Model):
     '''
     def __init__(self, *args, **kwargs):
         self.model = SVC(probability = kwargs.pop('probability', True), *args, **kwargs)
-        self.supports_prob = hasattr(self.model, 'predict_proba')
+        supports_prob = hasattr(self.model, 'predict_proba')
+
+        if supports_prob:
+            self.__class__ = Aux
 
     def train(self, dataset):
         X, y = dataset.get_labeled_entries()
@@ -29,15 +23,10 @@ class SVM(Model):
     def predict(self, feature):
         return self.model.predict(feature)
 
-    def predict_proba(self, feature):
-        if self.supports_prob:
-            return self.model.predict_proba(feature)
-        else:
-            raise Exception('Called predict_proba while probability is False')
-
     def score(self, dataset):
         X, y = dataset.get_labeled_entries()
         return self.model.score(X, y)
 
-
-# In[ ]:
+class Aux(SVM):
+    def predict_proba(self, feature):
+        return self.model.predict_proba(feature)
