@@ -22,11 +22,15 @@ class SVM(Model):
         X, y = dataset.get_labeled_entries()
         self.model.fit(X, y)
 
+    def decision_function(self, feature):
+        return self.model.decision_function(feature)
+
     def predict(self, feature):
         return self.model.predict(feature)
 
-    def predict_proba(self, feature):
-        return self.model.predict_proba(feature)
+    if hasattr(self.model, 'predict_proba'):
+        def predict_proba(self, feature):
+            return self.model.predict_proba(feature)
 
     def score(self, dataset):
         X, y = dataset.get_labeled_entries()
