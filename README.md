@@ -114,7 +114,7 @@ n_runs = 200
 
 test_scores = CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_unique_labels)
 
-# CalcScoreParallel instead of CalcScore for a cpu-parallized version 
+# CalcScoreParallel instead of CalcScore for a cpu-parallized version
 # Plot of test_scores below
 
 ```
@@ -159,3 +159,6 @@ class MLP(Model):
         return self.model.score(X, y)
 
 ```
+
+## Acknowledgments
+A big thanks to Yao-Yuan Yang, Shao-Chuan Lee, Yu-An Chung, Tung-En Wu, Si-An Chen and Hsuan-Tien Lin - the authors of the package 'libact'.
