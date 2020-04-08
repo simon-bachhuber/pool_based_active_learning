@@ -25,6 +25,9 @@ def entropy(a):
 def zipit(a,b):
     return np.array([[a[i], b[i]] for i in range(len(a))])
 
+def unzipit(a):
+    return np.array([x[0] for x in a]), np.array([x[1] for x in a])
+
 def sort_by_2nd(a, max_min):
     '''
     Sorts an array of shape = (n_samples, 2) by second arguments.
