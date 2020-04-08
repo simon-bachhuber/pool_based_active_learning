@@ -124,7 +124,7 @@ class Dataset(object):
 
     def get_num_of_labels(self):
         '''
-        Number of distinct labels in object.
+        Number of distinct classes in object.
 
         Returns:
         --------
