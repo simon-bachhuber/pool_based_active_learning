@@ -9,3 +9,4 @@ from .cluster_margin_sampling import ClusterMarginSampling
 from .representative_sampling import RepresentativeSampling
 from .rank_sampling import RankSampling
 from .class_balance_sampling import ClassBalanceSampling
+from .density_weighted_uncertainty_sampling import DensityWeightedUncertaintySampling
