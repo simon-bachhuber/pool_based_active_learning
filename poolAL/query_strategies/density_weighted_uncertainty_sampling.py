@@ -3,7 +3,12 @@ from .uncertainty_sampling import UncertaintySampling
 from sklearn.cluster import KMeans
 import numpy as np
 from .core.utils import zipit, sort_by_2nd, unzipit
-from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import pairwise_kernels as pw
+
+def normalized_pw(x,y, **kwargs):
+    _x = np.sqrt(pw(x, x, **kwargs))
+    _y = np.sqrt(pw(y, y, **kwargs))
+    return pw(x, y, **kwargs)/(_x*_y)
 
 class DensityWeightedUncertaintySampling(QueryStrategy):
     '''
@@ -33,6 +38,11 @@ class DensityWeightedUncertaintySampling(QueryStrategy):
         beta = 1 means they are weighted linearly
         default = 1
 
+    kernel: {string} out of [‘additive_chi2’, ‘chi2’, ‘linear’, ‘poly’, ‘polynomial’, ‘rbf’, ‘laplacian’, ‘sigmoid’, ‘cosine’]
+        Metric to determine the similarity between two samples, should output value between 0 (not similiar) and 1 (equal).
+        Underlying function is sklearn.metrics.pairwise.pairwise_kernels.
+        default = 'linear'
+
 
     Methods
     -------
@@ -54,6 +64,9 @@ class DensityWeightedUncertaintySampling(QueryStrategy):
 
         self.beta = kwargs.pop('beta', 1)
 
+        # Pairwise metric function
+        self.kernel = kwargs.pop('kernel', 'linear')
+
         if not isinstance(self.model, Model):
             raise TypeError(
             'Parameter model is not an object of type query_strategy.core.Model'
@@ -74,6 +87,9 @@ class DensityWeightedUncertaintySampling(QueryStrategy):
         self.l = None
         self._clustering()
 
+        # Aux deleter : Save which samples were queried so that you can delete them from similarity
+        #               in next iteration
+        self.aux_deleter = None
 
     def _clustering(self):
 
@@ -97,8 +113,9 @@ class DensityWeightedUncertaintySampling(QueryStrategy):
 
             self.similarity = []
             for i in range(len(X_pool)):
-                self.similarity.append(cosine_similarity(
-                    X_pool[i].reshape(1,-1), cluster_center[cluster_label[i]].reshape(1,-1)
+                self.similarity.append(normalized_pw(
+                    X_pool[i].reshape(1,-1), cluster_center[cluster_label[i]].reshape(1,-1),
+                    metric = self.kernel
                 )[0,0])
 
             self.similarity = np.asarray(self.similarity)
@@ -107,6 +124,10 @@ class DensityWeightedUncertaintySampling(QueryStrategy):
                 self.similarity = 1-self.similarity
 
     def make_query(self, size = 1):
+
+        # Delete samples from similarity from last iteration
+        if self.aux_deleter is not None and self.dataset.modified == True:
+            self.similarity = np.delete(self.similarity, self.aux_deleter)
 
         # Get uncertainty scores
         ids, us_scores = unzipit(self.US._get_scores())
@@ -123,7 +144,8 @@ class DensityWeightedUncertaintySampling(QueryStrategy):
         scores = sort_by_2nd(scores, self.max_min)
 
         # Delete the chosen ones out of self.similarity
-        self.similarity = np.delete(self.similarity, aux_deleter[:size, 0].astype(int))
+        self.aux_deleter = aux_deleter[:size, 0].astype(int)
+        self.dataset.modified = False
 
         return scores[:size, 0].astype(int)
 
