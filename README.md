@@ -10,6 +10,7 @@ pip install git+https://github.com/SimiPixel/pool_based_active_learning.git
 - QueryStrategy objects
   - RandomSampling
   - UncertaintySampling
+  - DensityWeightedUncertaintySampling
   - ClusterMarginSampling
   - ClassBalanceSampling
   - ExpectedErrorReduction
