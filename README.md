@@ -17,6 +17,7 @@ pip install git+https://github.com/SimiPixel/pool_based_active_learning.git
   - MeanDistanceSampling
   - QueryByCommittee
   - RepresentativeSampling
+  - NearestNeighbourCriterion
 - QueryStrategy object that uses a committee of QueryStrategy objects
   - RankSampling
   - ActiveLearningByLearning
@@ -161,5 +162,15 @@ class MLP(Model):
 
 ```
 
-## Acknowledgments
-A big thanks to Yao-Yuan Yang, Shao-Chuan Lee, Yu-An Chung, Tung-En Wu, Si-An Chen and Hsuan-Tien Lin - the authors of the package 'libact'.
+## Citing
+```
+@techreport{YY2017,
+  author = {Yao-Yuan Yang and Shao-Chuan Lee and Yu-An Chung and Tung-En Wu and Si-An Chen and Hsuan-Tien Lin},
+  title = {libact: Pool-based Active Learning in Python},
+  institution = {National Taiwan University},
+  url = {https://github.com/ntucllab/libact},
+  note = {available as arXiv preprint \url{https://arxiv.org/abs/1710.00379}},
+  month = oct,
+  year = 2017
+}
+```
