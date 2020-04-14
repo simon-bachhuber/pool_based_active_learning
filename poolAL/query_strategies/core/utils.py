@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[5]:
-
-
 import numpy as np
 def entropy(a):
     '''
@@ -71,5 +65,27 @@ def manhattan_metric(a,b):
         d += abs(a[i]-b[i])
     return d
 
+def euclidian_metric(a,b):
+    '''
+    Your typical euclidian metric.
 
-# In[ ]:
+    Parameters
+    ----------
+    a, b: np.arrays of shape = (n_features,)
+
+
+    Returns
+    -------
+    distance: float
+    '''
+    d = 0.0
+    a, b = a.astype(float), b.astype(float)
+
+    for i in range(len(a)):
+        d += (a[i]-b[i])**2
+    return np.sqrt(d)
+
+def euclidian_metric2(a,b):
+    
+    return np.sqrt(np.sum((a-b)**2))
+    
