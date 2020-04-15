@@ -120,7 +120,7 @@ class UncertaintySampling(QueryStrategy):
             dist = self.model.decision_function(unlabeled_samples)
 
             if self.method == 'lc':
-                return zipit(unlabeled_ids, np.array([max(e) for e in dist]))
+                return zipit(unlabeled_ids, np.array([np.max(e) for e in dist]))
 
             if self.method =='margin':
                 dist = np.sort(dist)
