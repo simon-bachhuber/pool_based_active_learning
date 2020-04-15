@@ -6,9 +6,17 @@ class NearestNeighbourCriterion(QueryStrategy):
     '''
     Representative query strategy. Its goal is to maximize the ability of the queried data 
     to represent the unlabeled data. The scheme is the following:
-        - For every unlabeled sample u, calculate the smallest distance to a labeled sample, this is the Nearest Neighbour distance NND
-        - Define NNC as the sum over all NND's for every u
+    
+        - For every unlabeled sample x, calculate the smallest distance to a labeled sample x',
+          this is the Nearest Neighbour distance NND
+          NND(x, L) = min_{x' from L} |x-x'|
+          
+        - Define NNC as the sum over NND for every x from U
+          NNC(U, L) = Sum_{x from U} NND(x, L)
+          
         - Chose the unlabeled sample that minimizes NNC after it is added to the labeled pool 
+          x_queried = argmin_{x from U} NNC(U \ x, L + x)
+          
     NNC is a measure how well the labeled data represents the unlabeled data, the lower the better.
 
     Parameters
