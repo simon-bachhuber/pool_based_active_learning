@@ -53,7 +53,7 @@ class DensityWeightedUncertaintySampling(QueryStrategy):
      References
     ----------
     .. [1] Settles, Burr. "Active learning literature survey." University of
-           Wisconsin, Madison 52.55-66 (2010): 11.
+           Wisconsin, Madison 52.55-66 (2010): 11. Page 25.
 
     '''
 
