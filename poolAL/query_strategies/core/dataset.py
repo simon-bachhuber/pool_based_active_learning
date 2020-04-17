@@ -37,6 +37,7 @@ class Dataset(object):
         self._X = X
         self._y = y
         self.modified = True
+        self.modified_X = False
 
     def __len__(self):
         '''
@@ -154,6 +155,7 @@ class Dataset(object):
         self._y = np.append(self._y, label)
 
         self.modified = True
+        self.modified_X = True
         return len(self) - 1
 
     def update(self, entry_id, new_label):
