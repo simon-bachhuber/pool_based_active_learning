@@ -63,6 +63,10 @@ class NearestNeighbourCriterion(QueryStrategy):
         return d
 
     def make_query(self, size = 1):
+        # Update two point matrix if samples were appended
+        if self.dataset.modified_X:
+            self.distance = self._get_distance()
+        
         labeled_ids = self.dataset.get_labeled_entries_ids()
         unlabeled_ids, _ = self.dataset.get_unlabeled_entries()
 
