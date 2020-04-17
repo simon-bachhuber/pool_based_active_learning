@@ -1,6 +1,6 @@
 import copy
 from sklearn.utils import shuffle
-from .dataset import Dataset
+from ..query_strategies.core import Dataset
 import numpy as np
 import time
 from IPython.display import clear_output
