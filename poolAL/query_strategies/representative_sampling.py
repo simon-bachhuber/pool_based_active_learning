@@ -130,6 +130,12 @@ class RepresentativeSampling(QueryStrategy):
             self.kMeans = KMeans(n_clusters= nr)
             nr_of_clusters_changed = True
 
+        ## Check that n_unlabeled_samples >= n_clusters
+        if self.space == 'unlabeled' and self.nr_of_clusters > self.dataset.len_unlabeled():
+            raise ValueError('There are more clusters than unlabeled samples.' +
+                             'Chose different space parameter.'
+            )
+
         ## Fit the kMeans to the space if required
         if self.space == 'all':
             X, _ = self.dataset.get_entries()
