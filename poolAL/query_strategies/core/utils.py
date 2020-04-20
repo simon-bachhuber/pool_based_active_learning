@@ -58,12 +58,7 @@ def manhattan_metric(a,b):
     -------
     distance: float
     '''
-    d = 0.0
-    a, b = a.astype(float), b.astype(float)
-
-    for i in range(len(a)):
-        d += abs(a[i]-b[i])
-    return d
+    return np.sum(np.abs(a-b))
 
 def euclidian_metric(a,b):
     '''
@@ -78,14 +73,4 @@ def euclidian_metric(a,b):
     -------
     distance: float
     '''
-    d = 0.0
-    a, b = a.astype(float), b.astype(float)
-
-    for i in range(len(a)):
-        d += (a[i]-b[i])**2
-    return np.sqrt(d)
-
-def euclidian_metric2(a,b):
-    
     return np.sqrt(np.sum((a-b)**2))
-    
