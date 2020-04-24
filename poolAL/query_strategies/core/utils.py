@@ -1,4 +1,7 @@
 import numpy as np
+from .dataset import Dataset
+from sklearn.utils import shuffle as sk_shuffle
+
 def entropy(a):
     '''
     Calculates entropy of given discrete probability distribution.
@@ -74,3 +77,48 @@ def euclidian_metric(a,b):
     distance: float
     '''
     return np.sqrt(np.sum((a-b)**2))
+
+def shuffle(X, y, n_classes, random_state):
+    '''
+    Shuffles X, y in such a way that the first n_classes samples are all unique classes.
+
+    X: {np.array}
+    y: {list}
+
+    '''
+    d = Dataset(X, y)
+
+    # The number of samples per class and unique labels
+    _ = d.class_balance()
+    labels, p = list(_.keys()), np.fromiter(_.values(), dtype = int)
+    p = p/d.__len__()
+
+    # Draw which classes are going to be initial classes
+    np.random.seed(random_state)
+    n_classes_labels = np.random.choice(labels, n_classes, replace = False, p=p)
+
+    # Shuffle
+    X, y = sk_shuffle(X, y, random_state = random_state)
+
+    # Generate mask for permutation
+    count = -1
+    y = np.array(y)
+
+    for l in n_classes_labels:
+
+        # index of the drawn classes
+        idx = y.tolist().index(l)
+
+        permu = np.arange(d.__len__())
+        count += 1
+
+        permu[count] = idx
+        permu[idx] = count
+
+        # Do the permutation
+        X = X[permu]
+        y = y[permu]
+
+    y = y.tolist()
+
+    return X, y
