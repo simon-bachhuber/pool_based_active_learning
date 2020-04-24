@@ -1,5 +1,5 @@
 import copy
-from sklearn.utils import shuffle
+from ..query_strategies.core.utils import shuffle
 from ..query_strategies.core import Dataset
 import numpy as np
 import time
@@ -11,6 +11,7 @@ def CalcScoreParallel(_X, _y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, 
     '''
     A cpu parallelized version of CalcScore. Runs on all available threads.
     Calculates the mean score of a list of query strategies (or a single qs) given a budget of labels
+    Don't use it with warm started classifiers, use poolAL.evaluate.calc_score.CalcScore instead.
 
 
     Parameters
@@ -38,6 +39,8 @@ def CalcScoreParallel(_X, _y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, 
         Number of runs for averaging
     n_unique_labels_start: {int}
         Number of unique labels in initial labels
+    random_state: {int}
+        default = None
 
 
     Returns
@@ -73,7 +76,7 @@ def CalcScoreParallel(_X, _y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, 
 
     # Setup random_states to make it perfectly reproducable
     np.random.seed(kwargs.pop('random_state', None))
-    random_state = np.array([np.random.randint(0, 2**32, size = 100) for x in range(n_runs)])
+    random_state = np.array([np.random.randint(0, 2**32) for x in range(n_runs)])
 
 
     def run(_):
@@ -84,17 +87,8 @@ def CalcScoreParallel(_X, _y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, 
 
         result = np.zeros((N, n_labels, 2))
 
-        # Shuffle until every class is present in initial data
-        escape = -1
-        while True:
-            escape += 1
-            X, y = shuffle(_X, _y, random_state = random_state[_, escape])
-            if len(set(y[:n_labels_start])) >= n_unique_labels_start:
-                # Found a permutation
-                break
-            # Raise Error if its too hard
-            if escape > 99:
-                raise Exception('Ensuring that enough classes are present initially is too hard')
+        # Shuffle
+        X, y = shuffle(_X, _y, n_unique_labels_start, random_state = random_state[_])
 
         # Create Datasets
         data_train = Dataset(X[:n_labels_end], y[:n_labels_start]+(n_labels_end-n_labels_start)*[None])
