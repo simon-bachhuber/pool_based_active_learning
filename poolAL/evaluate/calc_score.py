@@ -29,11 +29,11 @@ def CalcScore(_X, _y, qs, qs_kwargs, clf, clf_kwargs, n_labels_start, n_labels_e
     qs_kwargs: {list} of Dictionaries
         Each query strategies repspective kwargs
 
-    clf: {list} of poolAL.query_strategies.core.models.model.Model objects
+    clf: {poolAL.query_strategies.core.models.model.Model} object pre-instantiated
         The classifier for every query strategy used to calculate the test scores
 
-    clf_kwargs: {list} of Dictionaries
-        Each classfiers repspective kwargs
+    clf_kwargs: {dict}
+        The classfiers repspective kwargs
 
     n_labels_start: {int}
         Number of initially available labels
@@ -50,6 +50,9 @@ def CalcScore(_X, _y, qs, qs_kwargs, clf, clf_kwargs, n_labels_start, n_labels_e
     random_state: {int}
         default = None
 
+    return_Var: {bool}
+        Wether or not to return Variance.
+        default = False
 
     Returns
     -------
@@ -59,6 +62,13 @@ def CalcScore(_X, _y, qs, qs_kwargs, clf, clf_kwargs, n_labels_start, n_labels_e
         Axis 1 is the different number of labels
         Axis 2 is of the form (current_n_labels, current_test_score)
 
+    if return_Var is True:
+    {np.array} of shape (len(qs), n_labels_end-n_labels_start, 3)
+        Mean test score calculated on the remaining samples. So n_test_samples = len(X)-n_labels_end.
+        Axis 0 is the different query strategies
+        Axis 1 is the different number of labels
+        Axis 2 is of the form (current_n_labels, current_test_score, variance)
+
 
     Example
     -------
@@ -66,8 +76,8 @@ def CalcScore(_X, _y, qs, qs_kwargs, clf, clf_kwargs, n_labels_start, n_labels_e
     X, y = load_iris(return_X_y=True)
     y = y.tolist()
     clf = SVM(kernel = 'linear', random_state = 1)
-    clf_test = 4*[SVM]
-    clf_test_kwargs = 4*[{'kernel':'linear', 'random_state': 1}]
+    clf_test = SVM
+    clf_test_kwargs = {'kernel':'linear', 'random_state': 1}
 
     deal_qs = [ClusterMarginSampling, UncertaintySampling]
     deal_qs_kwargs = [{'space':'full'}, {'model': clf}]
@@ -78,6 +88,8 @@ def CalcScore(_X, _y, qs, qs_kwargs, clf, clf_kwargs, n_labels_start, n_labels_e
     CalcScore(X, y, qs, qs_kwargs, clf_test, clf_test_kwargs, 3, 100, 200, 3)
 
     '''
+    # kwargs
+    return_Var = kwargs.pop('return_Var', False)
 
     # Optionally fixing the random seed to make it perfectly reproducable
     np.random.seed(kwargs.pop('random_state', None))
@@ -88,9 +100,9 @@ def CalcScore(_X, _y, qs, qs_kwargs, clf, clf_kwargs, n_labels_start, n_labels_e
     N = len(qs)
 
     # Result array
-    result = np.zeros((N, n_labels_end - n_labels_start, 2))
+    result = np.zeros((n_runs, N, n_labels_end - n_labels_start, 2))
 
-    n_labels = result.shape[1]
+    n_labels = result.shape[2]
 
     t1 = time.time()
     t2 = 0
@@ -128,7 +140,7 @@ def CalcScore(_X, _y, qs, qs_kwargs, clf, clf_kwargs, n_labels_start, n_labels_e
 
             # Instantiate the classifier to calculate the test scores
             # for every query strategy
-            clf_inst.append(clf[j](**clf_kwargs[j]))
+            clf_inst.append(clf(**clf_kwargs))
 
             # Instantiate the query_strategy list for Committee's / Bandit's
             if 'query_strategy' in qs_kwargs[j]:
@@ -146,9 +158,9 @@ def CalcScore(_X, _y, qs, qs_kwargs, clf, clf_kwargs, n_labels_start, n_labels_e
             for k in range(N):
                 # Score
                 clf_inst[k].train(data_train[k])
-                result[k,j,1] += clf_inst[k].score(data_test)
-                if i == 0:
-                    result[k,j,0] = j + n_labels_start
+                result[i,k,j,1] = clf_inst[k].score(data_test)
+                # Save the number of labels at iter point
+                result[i,k,j,0] = j + n_labels_start
 
                 # Make query and update
                 idx = qs_inst[k].make_query()
@@ -157,5 +169,17 @@ def CalcScore(_X, _y, qs, qs_kwargs, clf, clf_kwargs, n_labels_start, n_labels_e
                 data_train[k].update(idx, y[idx])
 
     # Take the mean
-    result[:,:,1] = result[:,:,1]/n_runs
-    return result
+    mean = np.mean(result, axis = 0)
+
+    if return_Var:
+        var = np.array([result[x,:,:,1]-mean[:,:,1] for x in range(n_runs)])
+        var = var**2
+        var = np.sum(var, axis = 0)
+        var /= n_runs
+        var = var.reshape((var.shape[0], var.shape[1],1))
+        result = np.concatenate((mean, var), axis = 2)
+
+        return result
+
+    else:
+        return mean
