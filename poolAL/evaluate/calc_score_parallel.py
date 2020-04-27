@@ -142,5 +142,4 @@ def CalcScoreParallel(_X, _y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, 
     p.join()
     p.clear()
 
-    # Take the mean
     return result
