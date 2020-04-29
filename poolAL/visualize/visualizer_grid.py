@@ -178,6 +178,10 @@ class VisualizerGrid:
         # Update labeled ids
         self.labeled_ids = self.dataset.get_labeled_entries_ids()
 
+        # Fit if classifier is not fitted in .make_query
+        if not hasattr(self.qs, 'model'):
+            self.clf.train(self.dataset)
+
         # Update predictions
         self.pred = self.clf.predict(self.qs_grid.dataset._X)
         # Convert to colors
