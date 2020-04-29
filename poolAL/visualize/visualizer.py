@@ -35,6 +35,10 @@ class Visualizer:
         using a color gradient.
         default = False
 
+    random_state: {bool}
+        Random_state for PCA and TSNE.
+        default = None
+
 
     Methods:
     --------
@@ -64,14 +68,17 @@ class Visualizer:
         # Dataset
         self.dataset = self.qs.dataset
 
+        # random state for dimension reduction
+        self.random_state = kwargs.pop('random_state', None)
+
         # Save samples
         self._X = self.dataset._X
 
         # PCA
-        self.pca = PCA(n_components=self.dim_pca)
+        self.pca = PCA(n_components=self.dim_pca, random_state=self.random_state)
 
         # TSNE
-        self.tsne = TSNE(perplexity = kwargs.pop('perplexity', 30))
+        self.tsne = TSNE(perplexity = kwargs.pop('perplexity', 30), random_state=self.random_state)
 
         # Transform to embedded space
         self.embedded_X = self._transform()
@@ -181,6 +188,8 @@ class Visualizer:
         if draw_class_labels:
             # Draw all
             plt.scatter(self.embedded_X[:,0], self.embedded_X[:,1], c=self._y_color, edgecolors='black', s=40)
+        else:
+            plt.scatter(self.embedded_X[:,0], self.embedded_X[:,1], c='white', edgecolors='black', s=40)
 
         return fig
 
@@ -202,5 +211,7 @@ class Visualizer:
         if draw_class_labels:
             # Draw all
             plt.scatter(self.embedded_X[:,0], self.embedded_X[:,1], c=self._y_color, edgecolors='black', s=40)
+        else:
+            plt.scatter(self.embedded_X[:,0], self.embedded_X[:,1], c='white', edgecolors='black', s=40)
 
         return fig
