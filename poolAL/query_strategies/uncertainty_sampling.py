@@ -127,7 +127,7 @@ class UncertaintySampling(QueryStrategy):
                 return zipit(unlabeled_ids, np.array([e[-1]-e[-2] for e in dist]))
 
     def confidence(self):
-        pass
+        return self._get_scores()[:,1]
 
     def make_query(self, size = 1):
         scores = self._get_scores()
