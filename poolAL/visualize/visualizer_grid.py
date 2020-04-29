@@ -113,7 +113,9 @@ class VisualizerGrid:
         self.embedded_X_samples = self.embedded_X[:(l-self.size)]
 
         # Classifier if query strategy doesent have one
-        self.clf = kwargs.pop('classifier', self.qs.model)
+        self.clf = kwargs.pop('classifier', None)
+        if self.clf is None:
+            self.clf = self.qs.model
 
         # predictions
         self.pred = None
