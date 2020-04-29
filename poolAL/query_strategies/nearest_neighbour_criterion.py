@@ -4,19 +4,19 @@ import numpy as np
 
 class NearestNeighbourCriterion(QueryStrategy):
     '''
-    Representative query strategy. Its goal is to maximize the ability of the queried data 
+    Representative query strategy. Its goal is to maximize the ability of the queried data
     to represent the unlabeled data. The scheme is the following:
-    
+
         - For every unlabeled sample x, calculate the smallest distance to a labeled sample x',
           this is the Nearest Neighbour distance NND
           NND(x, L) = min_{x' from L} |x-x'|
-          
+
         - Define NNC as the sum over NND for every x from U
           NNC(U, L) = Sum_{x from U} NND(x, L)
-          
-        - Chose the unlabeled sample that minimizes NNC after it is added to the labeled pool 
+
+        - Chose the unlabeled sample that minimizes NNC after it is added to the labeled pool
           x_queried = argmin_{x from U} NNC(U \ x, L + x)
-          
+
     NNC is a measure how well the labeled data represents the unlabeled data, the lower the better.
 
     Parameters
@@ -50,7 +50,7 @@ class NearestNeighbourCriterion(QueryStrategy):
     def _get_distance(self):
         X = self.dataset._X
 
-        # Number of samples 
+        # Number of samples
         n = len(X)
 
         d = np.zeros((n,n))
@@ -59,15 +59,15 @@ class NearestNeighbourCriterion(QueryStrategy):
                 temp = self.metric(X[i], X[j])
                 d[i,j] = temp
                 d[j,i] = temp
-        
+
         return d
 
-    def make_query(self, size = 1):
+    def _get_scores(self):
         # Update two point matrix if samples were appended
         if self.dataset.modified_X:
             self.distance = self._get_distance()
             self.dataset.modified_X = False
-        
+
         labeled_ids = self.dataset.get_labeled_entries_ids()
         unlabeled_ids, _ = self.dataset.get_unlabeled_entries()
 
@@ -94,17 +94,19 @@ class NearestNeighbourCriterion(QueryStrategy):
         # Zipit
         score = zipit(unlabeled_ids, score)
 
-        # Sort 
-        results = sort_by_2nd(score, 'min')    
-            
+        # Sort
+        results = sort_by_2nd(score, 'min')
+
+        return results
+
+    def make_query(self, size = 1):
+        results = self._get_scores()
+
         return results[:size, 0].astype(int)
 
 
     def confidence(self):
-        pass
-
-
-
-
-
-
+        '''
+        The lower the better.
+        '''
+        return self._get_scores()[:,1]
