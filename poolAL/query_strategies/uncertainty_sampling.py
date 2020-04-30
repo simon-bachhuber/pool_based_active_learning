@@ -98,10 +98,14 @@ class UncertaintySampling(QueryStrategy):
                 raise TypeError('If record_scores is True, then test_dataset must be given a Dataset object')
         self.current_score = None
 
-    def _get_scores(self):
+    def _get_scores(self, grid_X = None):
         d = self.dataset
         self.model.train(d)
-        unlabeled_ids, unlabeled_samples = d.get_unlabeled_entries()
+
+        if grid_X is None:
+            unlabeled_ids, unlabeled_samples = d.get_unlabeled_entries()
+        else:
+            unlabeled_ids, unlabeled_samples = np.arange(len(grid_X)), grid_X
 
         if self.supports_prob:
             pred = self.model.predict_proba(unlabeled_samples)
@@ -147,3 +151,7 @@ class UncertaintySampling(QueryStrategy):
             scores = sort_by_2nd(scores, 'min')
 
         return scores[:size, 0].astype(int)
+
+
+    def confidence_grid(self, grid_X):
+        return self._get_scores(grid_X)[:,1]

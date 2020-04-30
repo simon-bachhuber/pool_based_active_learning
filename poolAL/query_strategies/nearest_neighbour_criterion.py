@@ -47,6 +47,8 @@ class NearestNeighbourCriterion(QueryStrategy):
         # Calculate two point distance matrix
         self.distance = self._get_distance()
 
+        self.grid_distance = None
+
     def _get_distance(self):
         X = self.dataset._X
 
@@ -94,13 +96,13 @@ class NearestNeighbourCriterion(QueryStrategy):
         # Zipit
         score = zipit(unlabeled_ids, score)
 
-        # Sort
-        results = sort_by_2nd(score, 'min')
-
-        return results
+        return score
 
     def make_query(self, size = 1):
-        results = self._get_scores()
+        score = self._get_scores()
+
+        # Sort
+        results = sort_by_2nd(score, 'min')
 
         return results[:size, 0].astype(int)
 
@@ -110,3 +112,52 @@ class NearestNeighbourCriterion(QueryStrategy):
         The lower the better.
         '''
         return self._get_scores()[:,1]
+
+    def confidence_grid(self, grid_X):
+        '''
+        Parameters
+        ----------
+
+        grid_X: {np.array} of form (n_grid_points, n_features)
+        '''
+        if self.grid_distance is None:
+            # Calculate distance matrix
+            X = np.vstack((self.dataset._X, grid_X))
+
+            # Number of samples
+            n = len(X)
+
+            d = np.zeros((n,n))
+            for i in range(n):
+                for j in range(i):
+                    temp = self.metric(X[i], X[j])
+                    d[i,j] = temp
+                    d[j,i] = temp
+
+            self.grid_distance = d
+
+
+        labeled_ids = self.dataset.get_labeled_entries_ids()
+        unlabeled_ids, _ = self.dataset.get_unlabeled_entries()
+        grid_ids = np.arange(len(self.dataset._X), self.grid_distance.shape[0])
+
+        # Number of grid points
+        n = len(grid_X)
+
+        # Instantiate vector for scores
+        score = np.zeros(n)
+
+        for i in range(n):
+
+            # Move one grid point to labeled
+            temp_l = np.append(labeled_ids, grid_ids[i])
+
+            for idu in unlabeled_ids:
+                nnd = []
+                for idl in temp_l:
+                    nnd.append(self.grid_distance[idu, idl])
+
+                # Keep the smallest nnd
+                score[i] += min(nnd)
+
+        return score
