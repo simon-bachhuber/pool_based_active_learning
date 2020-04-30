@@ -1,6 +1,7 @@
 import numpy as np
 from .dataset import Dataset
 from sklearn.utils import shuffle as sk_shuffle
+import copy
 
 def entropy(a):
     '''
@@ -122,3 +123,29 @@ def shuffle(X, y, n_classes, random_state):
     y = y.tolist()
 
     return X, y
+
+def get_grid(X, n_grid):
+
+    mi = np.min(X, axis = 0)
+    ma = np.max(X, axis = 0)
+
+    dim = X.shape[1]
+
+    coor = []
+    for i in range(dim):
+        coor.append(np.linspace(mi[i], ma[i], n_grid))
+
+    mesh = np.meshgrid(*coor)
+
+    # Flatten the meshgrid
+    for i in range(dim):
+        mesh[i] = mesh[i].flatten()
+
+    # Convert meshgrid into form (n_samples, n_features)
+    a = copy.copy(mesh[0].reshape((mesh[0].shape+(1,))))
+    a.fill('nan')
+
+    for arr in mesh:
+        a = np.concatenate((a, arr.reshape((arr.shape+(1,)))), axis = -1)
+
+    return np.apply_along_axis(lambda a: a[1:], axis = -1, arr = a)
