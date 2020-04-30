@@ -9,7 +9,7 @@ from ..query_strategies.core.utils import get_grid
 class VisualizerGrid:
     '''
     Visualizes the process of the query strategy when making a desicion in 2d-data space.
-    If dim_pca and dim_svd are both larger than 2, then uses TSNE to always transform to 2 dimensions for visualisation.
+    If dim_pca and dim_svd are both larger than 2 or None, then uses TSNE to always transform to 2 dimensions for visualisation.
 
     Parameters:
     -----------
@@ -65,20 +65,24 @@ class VisualizerGrid:
 
         self.dim_svd = kwargs.pop('dim_svd', 5)
 
-        if self.dim_pca is None and self.dim_svd is None:
-            raise ValueError('Both dim_svd and dim_pca can not be None. At least one must be given.')
+        #if self.dim_pca is None and self.dim_svd is None:
+        #    raise ValueError('Both dim_svd and dim_pca can not be None. At least one must be given.')
 
-        if self.dim_pca == self.dim_svd:
+        if self.dim_pca == self.dim_svd and self.dim_pca is not None:
             raise ValueError('dim_svd and dim_pca should not be equal.')
 
         self.both = False
         if self.dim_pca is not None and self.dim_svd is not None:
             self.both = True
             self.smaller_dim = min(self.dim_pca, self.dim_svd)
+        elif self.dim_pca is None and self.dim_svd is None:
+            self.smaller_dim = self.qs.dataset._X.shape[1]
         elif self.dim_pca is None:
             self.smaller_dim = self.dim_svd
-        else:
+        elif self.dim_svd is None:
             self.smaller_dim = self.dim_pca
+        else:
+            pass
 
         # Save labels
         self._y = kwargs.pop('y', None)
@@ -105,6 +109,9 @@ class VisualizerGrid:
             else:
                 self._X = self.svd.fit_transform(self._X)
                 self._X = self.pca.fit_transform(self._X)
+        # None for both, do nothing
+        elif self.dim_pca is None and self.dim_svd is None:
+            pass
         # Only SVD
         elif self.dim_pca is None:
             self.svd = TruncatedSVD(n_components=self.dim_svd, random_state=self.random_state)
@@ -114,10 +121,11 @@ class VisualizerGrid:
             self.pca = PCA(n_components=self.dim_pca, random_state=self.random_state)
             self._X = self.pca.fit_transform(self._X)
         else:
-            raise Exception('Something is wrong ..')
+            raise Exception('Something went wrong ..')
 
-        # Replace samples by pca reduced ones
+        # Replace samples by reduced ones
         self.qs.dataset._X = self._X
+        self.qs.dataset.modified_X = True
 
         # save dataset
         self.dataset = self.qs.dataset
