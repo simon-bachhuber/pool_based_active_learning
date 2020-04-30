@@ -79,7 +79,7 @@ def euclidian_metric(a,b):
     '''
     return np.sqrt(np.sum((a-b)**2))
 
-def shuffle(X, y, n_classes, random_state):
+def shuffle(X, y, n_classes, random_state = None):
     '''
     Shuffles X, y in such a way that the first n_classes samples are all unique classes.
 
