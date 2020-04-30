@@ -53,11 +53,11 @@ data.update(idx, label)
 ```python
 # Import Iris dataset and shuffle it
 from sklearn.datasets import load_iris
-from sklearn.utils import shuffle
+from from poolAL.query_strategies.core.utils import shuffle
 
 X, y = load_iris(return_X_y = True)
 y = y.tolist()
-X, y = shuffle(X, y)
+X, y = shuffle(X, y, 3)
 
 # Declare Dataset objects
 from poolAL.query_strategies.core import Dataset
@@ -96,14 +96,18 @@ from poolAL.query_strategies import RandomSampling, ClusterMarginSampling, Uncer
 from poolAL.query_strategies.core import SVM
 
 # Instantiate classifier
-clf = SVM(kernel = 'linear', random_state = 1)
+clf = SVM(kernel = 'linear')
+
+# Classifier kwargs as a dict
+clf_kwargs = {'kernel': 'linear'}
 
 # Declare query strategies and their respective keyword arguments
 qs = [RandomSampling, ClusterMarginSampling, UncertaintySampling]
 qs_kwargs = [{}, {'space': 'full'}, {'model': clf}]
 
-# Declare parameters
+# Load Iris
 X, y = load_iris(return_X_y = True)
+y = y.tolist()
 
 # Number of labels to start with
 n_labels_start = 3
@@ -114,7 +118,7 @@ n_unique_labels = 3
 # Number of runs for averaging
 n_runs = 200
 
-test_scores = CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, n_runs, n_unique_labels)
+test_scores = CalcScore(X, y, qs, qs_kwargs, SVM, clf_kwargs, n_labels_start, n_labels_end, n_runs, n_unique_labels)
 
 # CalcScoreParallel instead of CalcScore for a cpu-parallized version
 # Plot of test_scores below
@@ -124,6 +128,36 @@ test_scores = CalcScore(X, y, qs, qs_kwargs, clf, n_labels_start, n_labels_end, 
 <p align="center">
 <img src="https://github.com/SimiPixel/pool_based_active_learning/blob/master/readme_plot.svg" width="650">
 </p>
+
+## Visualisation of UncertaintySampling: Why it works
+```python
+from sklearn.datasets import load_iris
+from poolAL.query_strategies.core.utils import shuffle
+
+# load again Iris and shuffle
+X, y = load_iris(return_X_y = True)
+y = y.tolist()
+X, y = shuffle(X, y, 3)
+
+from poolAL.query_strategies.core import Dataset, SVM
+
+# Declare Dataset and classifier
+d = Dataset(X, y[:100]+50*[None])
+clf = SVM(kernel = 'linear')
+
+from poolAL.query_strategies import UncertaintySampling
+
+# Declare query strategy
+US = UncertaintySampling(d, model = clf)
+
+from poolAL.visualize import VisualizerGrid
+
+vis = VisualizerGrid(US, dim_svd = 2, n_grid = 70, y=y)
+vis.next()
+vis.plot()
+
+```
+
 
 ## Using active learning on your own classifier
 Some QueryStrategies require a classifier to base their query desicion on, e.g., UncertaintySampling queries the samples that a given classifier is most uncertain off. This classifier must be a Model object.
