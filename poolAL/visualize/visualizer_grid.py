@@ -1,13 +1,15 @@
 import numpy as np
 from sklearn.manifold import TSNE
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, TruncatedSVD
 import copy
 import matplotlib.pyplot as plt
 from ..query_strategies.core import QueryStrategy
+from ..query_strategies.core.utils import get_grid
 
 class VisualizerGrid:
     '''
     Visualizes the process of the query strategy when making a desicion in 2d-data space.
+    If dim_pca and dim_svd are both larger than 2, then uses TSNE to always transform to 2 dimensions for visualisation.
 
     Parameters:
     -----------
@@ -21,14 +23,19 @@ class VisualizerGrid:
 
     classifier: optional
 
-    dim_pca: {int}
+    dim_svd: {int} or None
         The number of dimension after PCA is used to dimension reduce.
-        Then TSNE will always reduce further to two dimensions.
+        If None only uses PCA.
         default = 5
+
+    dim_pca: {int} or None
+        The number of dimension after PCA is used to dimension reduce.
+        If None only uses SVD
+        default = None
 
     n_grid: {int}
         The grid size per dimension. The number of points in the grid is
-        n_grid**dim_pca
+        n_grid** Min(dim_pca, dim_svd)
         default = 5
 
     random_state: {bool}
@@ -54,7 +61,24 @@ class VisualizerGrid:
         if not isinstance(self.qs, QueryStrategy):
             raise TypeError('qs parameter must be a QueryStrategy object')
 
-        self.dim_pca = kwargs.pop('dim_pca', 5)
+        self.dim_pca = kwargs.pop('dim_pca', None)
+
+        self.dim_svd = kwargs.pop('dim_svd', 5)
+
+        if self.dim_pca is None and self.dim_svd is None:
+            raise ValueError('Both dim_svd and dim_pca can not be None. At least one must be given.')
+
+        if self.dim_pca == self.dim_svd:
+            raise ValueError('dim_svd and dim_pca should not be equal.')
+
+        self.both = False
+        if self.dim_pca is not None and self.dim_svd is not None:
+            self.both = True
+            self.smaller_dim = min(self.dim_pca, self.dim_svd)
+        elif self.dim_pca is None:
+            self.smaller_dim = self.dim_svd
+        else:
+            self.smaller_dim = self.dim_pca
 
         # Save labels
         self._y = kwargs.pop('y', None)
@@ -67,9 +91,30 @@ class VisualizerGrid:
         # Save samples
         self._X = self.qs.dataset._X
 
-        # PCA
-        self.pca = PCA(n_components=self.dim_pca, random_state=self.random_state)
-        self._X = self.pca.fit_transform(self._X)
+        # PCA/SVD
+        # Do both
+        if self.both:
+            self.pca = PCA(n_components=self.dim_pca, random_state=self.random_state)
+            self.svd = TruncatedSVD(n_components=self.dim_svd, random_state=self.random_state)
+
+            # First PCA
+            if self.dim_pca > self.dim_svd:
+                self._X = self.pca.fit_transform(self._X)
+                self._X = self.svd.fit_transform(self._X)
+            # First SVD
+            else:
+                self._X = self.svd.fit_transform(self._X)
+                self._X = self.pca.fit_transform(self._X)
+        # Only SVD
+        elif self.dim_pca is None:
+            self.svd = TruncatedSVD(n_components=self.dim_svd, random_state=self.random_state)
+            self._X = self.svd.fit_transform(self._X)
+        # Only PCA
+        elif self.dim_svd is None:
+            self.pca = PCA(n_components=self.dim_pca, random_state=self.random_state)
+            self._X = self.pca.fit_transform(self._X)
+        else:
+            raise Exception('Something is wrong ..')
 
         # Replace samples by pca reduced ones
         self.qs.dataset._X = self._X
@@ -95,19 +140,24 @@ class VisualizerGrid:
         # Grid size per dimension
         self.n_grid = kwargs.pop('n_grid', 5)
 
-        # Total grid points
-        self.size = self.n_grid**self.dim_pca
-
         # Calculate the grid
-        self.grid_X = self._get_grid()
+        self.grid_X = get_grid(self._X, self.n_grid)
+        self.full_X = np.vstack((self._X, self.grid_X))
 
-        # Generate query strategy with grid points
-        self.qs_grid = copy.deepcopy(self.qs)
-        self.qs_grid.dataset._X = np.vstack((self._X, self.grid_X))
-        self.qs_grid.dataset._y = np.concatenate((self.qs_grid.dataset._y, np.array([None for _ in range(self.size)])))
+        # Total number of grid points
+        self.size = self.n_grid**self.smaller_dim
+
+        # Check
+        if self.size != len(self.grid_X):
+            raise Exception('There is something going wrong when computing the grid')
 
         # Transform to embedded space
-        self.embedded_X = self.tsne.fit_transform(self.qs_grid.dataset._X)
+        # But only if required, so if the dimension is still larger than 2
+        if self.smaller_dim > 2:
+            self.embedded_X = self.tsne.fit_transform(self.full_X)
+        else:
+            self.embedded_X = self.full_X
+
         self.embedded_X_grid = self.embedded_X[-self.size:]
         l = len(self.embedded_X)
         self.embedded_X_samples = self.embedded_X[:(l-self.size)]
@@ -137,29 +187,6 @@ class VisualizerGrid:
 
         return c
 
-    def _get_grid(self):
-
-        mi = np.min(self._X, axis = 0)
-        ma = np.max(self._X, axis = 0)
-
-        coor = []
-        for i in range(self.dim_pca):
-            coor.append(np.linspace(mi[i], ma[i], self.n_grid))
-
-        mesh = np.meshgrid(*coor)
-
-        # Flatten the meshgrid
-        for i in range(self.dim_pca):
-            mesh[i] = mesh[i].flatten()
-
-        # Convert meshgrid into form (n_samples, n_features)
-        a = copy.copy(mesh[0].reshape((mesh[0].shape+(1,))))
-        a.fill('nan')
-
-        for arr in mesh:
-            a = np.concatenate((a, arr.reshape((arr.shape+(1,)))), axis = -1)
-
-        return np.apply_along_axis(lambda a: a[1:], axis = -1, arr = a)
 
     def next(self):
         '''
@@ -170,7 +197,6 @@ class VisualizerGrid:
         if self.query_ids is not None:
             id = self.query_ids[0]
             self.dataset.update(id, self._y[id])
-            self.qs_grid.dataset.update(id, self._y[id])
 
         # Do next query
         self.query_ids = self.qs.make_query()
@@ -183,12 +209,12 @@ class VisualizerGrid:
             self.clf.train(self.dataset)
 
         # Update predictions
-        self.pred = self.clf.predict(self.qs_grid.dataset._X)
+        self.pred = self.clf.predict(self.grid_X)
         # Convert to colors
         self.pred = self._assign_color(self.pred)
 
         # Calculate confidences
-        self.conf = self.qs_grid.confidence()#[-self.size:]
+        self.conf = self.qs.confidence_grid(self.grid_X)
 
 
     def plot(self, draw_class_labels = True, **kwargs):
@@ -223,23 +249,20 @@ class VisualizerGrid:
 
         xlim, ylim = ax[0].get_xlim(), ax[0].get_ylim()
 
-        data = self.embedded_X
         ##### SUBPLOT 2: predictions
 
         if self.pred is not None:
-            ax[1].scatter(self.embedded_X_samples[self.labeled_ids,0], self.embedded_X_samples[self.labeled_ids,1],
-             edgecolors='deepskyblue', c='None', s=200)
-            ax[1].scatter(data[:,0], data[:,1], c=self.pred, s=40)
+            #ax[1].scatter(self.embedded_X_samples[self.labeled_ids,0], self.embedded_X_samples[self.labeled_ids,1],
+             #edgecolors='deepskyblue', c='None', s=200)
+            ax[1].scatter(self.embedded_X_grid[:,0], self.embedded_X_grid[:,1], c=self.pred, s=40)
 
         ##### SUBPLOT 3: confidence
 
-        mask = ~self.qs_grid.dataset.get_labeled_mask()
-
         if self.conf is not None:
             # Color gradient
-            ax[2].scatter(self.embedded_X_samples[self.labeled_ids,0], self.embedded_X_samples[self.labeled_ids,1],
-             edgecolors='deepskyblue', c='None', s=200)
-            c = ax[2].scatter(data[mask,0], data[mask,1], c=self.conf, s=40, cmap=kwargs.pop('cmap', 'winter'))
+            #ax[2].scatter(self.embedded_X_samples[self.labeled_ids,0], self.embedded_X_samples[self.labeled_ids,1],
+             #edgecolors='deepskyblue', c='None', s=200)
+            c = ax[2].scatter(self.embedded_X_grid[:,0], self.embedded_X_grid[:,1], c=self.conf, s=40, cmap=kwargs.pop('cmap', 'winter'))
 
             plt.colorbar(c)
 

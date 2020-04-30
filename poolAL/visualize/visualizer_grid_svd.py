@@ -4,6 +4,7 @@ from sklearn.decomposition import TruncatedSVD as SVD
 import copy
 import matplotlib.pyplot as plt
 from ..query_strategies.core import QueryStrategy
+from ..query_strategies.core.utils import get_grid
 
 class VisualizerGridSVD:
     '''
@@ -21,21 +22,20 @@ class VisualizerGridSVD:
 
     classifier: optional
 
-    dim_svd: {int}
-        SVD reduces dimension from dim_pca to dim_svd.
-        This is the number of dimensions when the grid is spanned.
-        default = 5
-
-    dim_pca: {int}
+    dim_svd: {int} or None
         The number of dimension after PCA is used to dimension reduce.
-        Then SVD will always reduce further to dim_grid dimensions.
-        Then SVD again down to 2 dimensions.
-        default = 15
+        If None only uses PCA.
+        default = 2
+
+    dim_pca: {int} or None
+        The number of dimension after PCA is used to dimension reduce.
+        If None only uses SVD
+        default = None
 
     n_grid: {int}
         The grid size per dimension. The number of points in the grid is
-        n_grid**dim_pca
-        default = 5
+        n_grid**2
+        default = 50
 
     random_state: {bool}
         Random_state for PCA and SVD.
@@ -60,9 +60,12 @@ class VisualizerGridSVD:
         if not isinstance(self.qs, QueryStrategy):
             raise TypeError('qs parameter must be a QueryStrategy object')
 
-        self.dim_pca = kwargs.pop('dim_pca', 15)
+        self.dim_pca = kwargs.pop('dim_pca', None)
 
-        self.dim_svd = kwargs.pop('dim_svd', 5)
+        self.dim_svd = kwargs.pop('dim_svd', 2)
+
+        if self.dim_pca is None and self.dim_svd is None:
+            raise ValueError('Both dim_svd and dim_pca can not be None. At least one must be given.')
 
         # Save labels
         self._y = kwargs.pop('y', None)
@@ -76,12 +79,12 @@ class VisualizerGridSVD:
         self._X = self.qs.dataset._X
 
         # PCA
-        self.pca = PCA(n_components=self.dim_pca, random_state=self.random_state)
+        self.pca = SVD(n_components=self.dim_pca, random_state=self.random_state)
         self._X = self.pca.fit_transform(self._X)
 
         # SVD
-        self.svd = SVD(n_components=self.dim_svd, random_state=self.random_state)
-        self._X = self.svd.fit_transform(self._X)
+        #self.svd = SVD(n_components=self.dim_svd, random_state=self.random_state)
+        #self._X = self.svd.fit_transform(self._X)
         self.svd = SVD(n_components= 2, random_state=self.random_state)
 
         # Replace samples by pca reduced ones
@@ -109,19 +112,15 @@ class VisualizerGridSVD:
         self.size = self.n_grid**self.dim_svd
 
         # Calculate the grid
-        self.grid_X = self._get_grid()
-
-        # Generate query strategy with grid points
-        self.qs_grid = copy.deepcopy(self.qs)
-        self.qs_grid.dataset._X = np.vstack((self._X, self.grid_X))
-        self.qs_grid.dataset._y = np.concatenate((self.qs_grid.dataset._y, np.array([None for _ in range(self.size)])))
+        self.grid_X = get_grid(self._X, self.n_grid)
+        self.full_X = np.vstack((self._X, self.grid_X))
 
         # Transform to embedded space
         if self.dim_svd > 2:
             self.svd.fit(self._X)
-            self.embedded_X = self.svd.transform(self.qs_grid.dataset._X)
+            self.embedded_X = self.svd.transform(self.full_X)
         else:
-            self.embedded_X = self.qs_grid.dataset._X
+            self.embedded_X = self.full_X
 
         self.embedded_X_grid = self.embedded_X[-self.size:]
         l = len(self.embedded_X)
@@ -152,29 +151,6 @@ class VisualizerGridSVD:
 
         return c
 
-    def _get_grid(self):
-
-        mi = np.min(self._X, axis = 0)
-        ma = np.max(self._X, axis = 0)
-
-        coor = []
-        for i in range(self.dim_svd):
-            coor.append(np.linspace(mi[i], ma[i], self.n_grid))
-
-        mesh = np.meshgrid(*coor)
-
-        # Flatten the meshgrid
-        for i in range(self.dim_svd):
-            mesh[i] = mesh[i].flatten()
-
-        # Convert meshgrid into form (n_samples, n_features)
-        a = copy.copy(mesh[0].reshape((mesh[0].shape+(1,))))
-        a.fill('nan')
-
-        for arr in mesh:
-            a = np.concatenate((a, arr.reshape((arr.shape+(1,)))), axis = -1)
-
-        return np.apply_along_axis(lambda a: a[1:], axis = -1, arr = a)
 
     def next(self):
         '''
@@ -198,12 +174,12 @@ class VisualizerGridSVD:
             self.clf.train(self.dataset)
 
         # Update predictions
-        self.pred = self.clf.predict(self.qs_grid.dataset._X[-self.size:])
+        self.pred = self.clf.predict(self.full_X[-self.size:])
         # Convert to colors
         self.pred = self._assign_color(self.pred)
 
         # Calculate confidences
-        self.conf = self.qs_grid.confidence()[-self.size:]
+        self.conf = self.qs.confidence_grid(self.grid_X)
 
 
     def plot(self, draw_class_labels = True, **kwargs):
