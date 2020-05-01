@@ -29,10 +29,15 @@ class Visualizer:
         in the ranking of the query strategy
         default = 5
 
-    rank_gradient: {int}
+    rank_gradient: {bool}
         If True, then instead of marking the n_best samples of the query, marks all
         unlabeled samples according to their rank in the query strategy ranking
         using a color gradient.
+        default = False
+        
+    conf_gradient: {bool}
+        If True, then instead of marking the n_best samples of the query, marks all
+        unlabeled samples according to their confidence score in the query.
         default = False
 
     random_state: {bool}
@@ -103,6 +108,14 @@ class Visualizer:
 
         if self.rank_gradient:
             self.size = 10**4
+            
+        # conf_gradient
+        self.conf_gradient = kwargs.pop('conf_gradient', False)
+        
+        self.conf = None
+        
+        if self.conf_gradient is True and self.rank_gradient is True:
+            raise Exception('Can only plot either ranks or confidence scores')
 
 
     def _assign_color(self):
@@ -145,6 +158,12 @@ class Visualizer:
 
         # Do next query
         self.query_ids = self.qs.make_query(self.size)
+        
+        # Update conf scores
+        if self.conf_gradient:
+            self.conf = self.qs.confidence()
+            if self.conf is None:
+                raise Exception('Sorry but this query strategy has no legit confidence method (yet)')
 
         # Update labeled ids
         self.labeled_ids = self.dataset.get_labeled_entries_ids()
@@ -167,6 +186,8 @@ class Visualizer:
 
         if self.rank_gradient:
             self._plot_rank_gradient(draw_class_labels, **kwargs)
+        elif self.conf_gradient:
+            self._plot_conf_gradient(draw_class_labels, **kwargs)
         else:
             self._plot(draw_class_labels)
 
@@ -176,7 +197,8 @@ class Visualizer:
         fig = plt.figure(figsize=(15,12))
 
         # Mark the labeled ones
-        plt.scatter(self.embedded_X[self.labeled_ids,0], self.embedded_X[self.labeled_ids,1], edgecolors='red', c='white', s=150)
+        plt.scatter(self.embedded_X[self.labeled_ids,0], self.embedded_X[self.labeled_ids,1], edgecolors='deepskyblue',
+                    c='None', s=150)
 
         if self.query_ids is not None:
             # Mark the number one
@@ -198,12 +220,29 @@ class Visualizer:
 
         fig = plt.figure(figsize=(15,12))
 
-        # Mark the labeled ones
-        plt.scatter(self.embedded_X[self.labeled_ids,0], self.embedded_X[self.labeled_ids,1], edgecolors='red', c='white', s=200)
-
         if self.query_ids is not None:
             # Color gradient
             plt.scatter(self.embedded_X[self.query_ids,0], self.embedded_X[self.query_ids,1], c=np.arange(len(self.query_ids)),
+            s=150, cmap=kwargs.pop('cmap', 'winter'))
+
+            plt.colorbar()
+
+        if draw_class_labels:
+            # Draw all
+            plt.scatter(self.embedded_X[:,0], self.embedded_X[:,1], c=self._y_color, edgecolors='black', s=40)
+        else:
+            plt.scatter(self.embedded_X[:,0], self.embedded_X[:,1], c='white', edgecolors='black', s=40)
+
+        return fig
+    
+    def _plot_conf_gradient(self, draw_class_labels, **kwargs):
+
+        fig = plt.figure(figsize=(15,12))
+
+        if self.conf is not None:
+            # Color gradient
+            idx, _ = self.dataset.get_unlabeled_entries()
+            plt.scatter(self.embedded_X[idx,0], self.embedded_X[idx,1], c=self.conf,
             s=150, cmap=kwargs.pop('cmap', 'winter'))
 
             plt.colorbar()
