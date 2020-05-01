@@ -150,14 +150,16 @@ from poolAL.query_strategies import UncertaintySampling
 # Declare query strategy
 US = UncertaintySampling(d, model = clf)
 
-from poolAL.visualize import VisualizerGrid
+from poolAL.visualize import Visualizer
 
-vis = VisualizerGrid(US, dim_svd = 2, n_grid = 70, y=y)
+vis = VisualizerGrid(US, y=y, conf_gradient = True)
 vis.next()
 vis.plot()
 
 ```
-
+<p align="center">
+<img src="https://github.com/SimiPixel/pool_based_active_learning/blob/master/readme_plot2.svg" width="1100">
+</p>
 
 ## Using active learning on your own classifier
 Some QueryStrategies require a classifier to base their query desicion on, e.g., UncertaintySampling queries the samples that a given classifier is most uncertain off. This classifier must be a Model object.
