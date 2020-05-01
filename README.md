@@ -152,7 +152,7 @@ US = UncertaintySampling(d, model = clf)
 
 from poolAL.visualize import Visualizer
 
-vis = VisualizerGrid(US, y=y, conf_gradient = True)
+vis = Visualizer(US, y=y, conf_gradient = True)
 vis.next()
 vis.plot()
 
