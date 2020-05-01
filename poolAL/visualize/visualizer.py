@@ -225,7 +225,8 @@ class Visualizer:
             plt.scatter(self.embedded_X[self.query_ids,0], self.embedded_X[self.query_ids,1], c=np.arange(len(self.query_ids)),
             s=150, cmap=kwargs.pop('cmap', 'winter'))
 
-            plt.colorbar()
+            cbar = plt.colorbar()
+            cbar.set_label('rank number in query')
 
         if draw_class_labels:
             # Draw all
@@ -245,7 +246,9 @@ class Visualizer:
             plt.scatter(self.embedded_X[idx,0], self.embedded_X[idx,1], c=self.conf,
             s=150, cmap=kwargs.pop('cmap', 'winter'))
 
-            plt.colorbar()
+            cbar = plt.colorbar()
+            if hasattr(self.qs, 'method'):
+                cbar.set_label(self.qs.method)
 
         if draw_class_labels:
             # Draw all
