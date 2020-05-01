@@ -226,7 +226,7 @@ class Visualizer:
             s=150, cmap=kwargs.pop('cmap', 'winter'))
 
             cbar = plt.colorbar()
-            cbar.set_label('rank number in query')
+            cbar.set_label('rank number in query', **kwargs)
 
         if draw_class_labels:
             # Draw all
@@ -248,7 +248,7 @@ class Visualizer:
 
             cbar = plt.colorbar()
             if hasattr(self.qs, 'method'):
-                cbar.set_label(self.qs.method)
+                cbar.set_label(self.qs.method, **kwargs)
 
         if draw_class_labels:
             # Draw all
