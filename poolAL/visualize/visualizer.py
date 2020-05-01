@@ -185,11 +185,11 @@ class Visualizer:
         '''
 
         if self.rank_gradient:
-            self._plot_rank_gradient(draw_class_labels, **kwargs)
+            return self._plot_rank_gradient(draw_class_labels, **kwargs)
         elif self.conf_gradient:
-            self._plot_conf_gradient(draw_class_labels, **kwargs)
+            return self._plot_conf_gradient(draw_class_labels, **kwargs)
         else:
-            self._plot(draw_class_labels)
+            return self._plot(draw_class_labels)
 
 
     def _plot(self, draw_class_labels):
