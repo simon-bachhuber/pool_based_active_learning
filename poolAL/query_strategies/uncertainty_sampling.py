@@ -121,7 +121,7 @@ class UncertaintySampling(QueryStrategy):
                 return zipit(unlabeled_ids, np.array([e[-1]-e[-2] for e in pred]))
 
         elif not self.supports_prob:
-            dist = np.abs(self.model.decision_function(unlabeled_samples))
+            dist = self.model.decision_function(unlabeled_samples)
 
             if self.method == 'lc':
                 return zipit(unlabeled_ids, np.array([np.max(e) for e in dist]))
