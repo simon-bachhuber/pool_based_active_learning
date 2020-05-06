@@ -123,6 +123,10 @@ class UncertaintySampling(QueryStrategy):
         elif not self.supports_prob:
             dist = self.model.decision_function(unlabeled_samples)
 
+            # Take absolute value if binary
+            if self.dataset.get_num_of_labels() ==2:
+                dist = np.abs(dist)
+
             if self.method == 'lc':
                 return zipit(unlabeled_ids, np.array([np.max(e) for e in dist]))
 

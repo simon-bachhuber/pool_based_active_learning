@@ -34,7 +34,7 @@ class Visualizer:
         unlabeled samples according to their rank in the query strategy ranking
         using a color gradient.
         default = False
-        
+
     conf_gradient: {bool}
         If True, then instead of marking the n_best samples of the query, marks all
         unlabeled samples according to their confidence score in the query.
@@ -108,12 +108,12 @@ class Visualizer:
 
         if self.rank_gradient:
             self.size = 10**4
-            
+
         # conf_gradient
         self.conf_gradient = kwargs.pop('conf_gradient', False)
-        
+
         self.conf = None
-        
+
         if self.conf_gradient is True and self.rank_gradient is True:
             raise Exception('Can only plot either ranks or confidence scores')
 
@@ -158,7 +158,7 @@ class Visualizer:
 
         # Do next query
         self.query_ids = self.qs.make_query(self.size)
-        
+
         # Update conf scores
         if self.conf_gradient:
             self.conf = self.qs.confidence()
@@ -168,7 +168,7 @@ class Visualizer:
         # Update labeled ids
         self.labeled_ids = self.dataset.get_labeled_entries_ids()
 
-    def plot(self, draw_class_labels = True, **kwargs):
+    def plot(self, draw_class_labels = True, return_fig = False, **kwargs):
         '''
         Plot one frame.
 
@@ -182,15 +182,24 @@ class Visualizer:
             Otherwise all points are white with black edge.
             default = True
 
+        return_fig: {bool}
+            default = False
+
         '''
-
-        if self.rank_gradient:
-            return self._plot_rank_gradient(draw_class_labels, **kwargs)
-        elif self.conf_gradient:
-            return self._plot_conf_gradient(draw_class_labels, **kwargs)
+        if return_fig:
+            if self.rank_gradient:
+                return self._plot_rank_gradient(draw_class_labels, **kwargs)
+            elif self.conf_gradient:
+                return self._plot_conf_gradient(draw_class_labels, **kwargs)
+            else:
+                return self._plot(draw_class_labels)
         else:
-            return self._plot(draw_class_labels)
-
+            if self.rank_gradient:
+                _ = self._plot_rank_gradient(draw_class_labels, **kwargs)
+            elif self.conf_gradient:
+                _ = self._plot_conf_gradient(draw_class_labels, **kwargs)
+            else:
+                _ = self._plot(draw_class_labels)
 
     def _plot(self, draw_class_labels):
 
@@ -235,7 +244,7 @@ class Visualizer:
             plt.scatter(self.embedded_X[:,0], self.embedded_X[:,1], c='white', edgecolors='black', s=40)
 
         return fig
-    
+
     def _plot_conf_gradient(self, draw_class_labels, **kwargs):
 
         fig = plt.figure(figsize=(15,12))
