@@ -20,7 +20,10 @@ class FisherInformationSampling(QueryStrategy):
         if not isinstance(self.model, Model):
             raise Exception('model  parameter should be of type .core.models.model.Model')
 
-        self.Q = np.zeros((self.dataset._X[0], self.dataset._X[1], self.dataset._X[1])) # shape (n_samples, n_features, n_features)
+        self.Q = np.zeros((self.dataset._X.shape[0], self.dataset._X.shape[1], self.dataset._X.shape[1])) # shape (n_samples, n_features, n_features)
+
+    def _gini(self, p):
+        return np.einsum('i,i->', p, 1-p)
 
     def _update_Q_contributions(self):
 
@@ -31,8 +34,10 @@ class FisherInformationSampling(QueryStrategy):
         # Grab probabilities
         pred = self.model.predict_proba(X)
 
-        for i in range(len(X)):
-            self.Q[i] = pred[i]*(1-pred[i])*np.einsum('i,j',X[i], X[i])
+        labeled_ids = self.dataset.get_labeled_entries_ids()
+
+        for i in labeled_ids:
+            self.Q[i] = self._gini(pred[i])*np.einsum('i,j',X[i], X[i])
 
         return pred
 
@@ -41,25 +46,27 @@ class FisherInformationSampling(QueryStrategy):
         # Update all Q contributions
         pred = self._update_Q_contributions()
 
-        labeled_ids = self.dataset.get_labeled_entries_ids()
-
         # Q is the sum of all Q contributions from labeled samples
-        Q = np.einsum('ijk->jk', self.Q[labeled_ids])
+        Q = np.einsum('ijk->jk', self.Q)
+        Q_inv = np.linalg.inv(Q)
 
-        unlabeled_ids, X_unlabeled = self.dataset.get_unlabeled_entries()
+        unlabeled_ids, _ = self.dataset.get_unlabeled_entries()
+        X = self.dataset._X
 
         det = []
-        for i in range(len(unlabeled_ids)):
-            Q_temp = Q + self.Q[unlabeled_ids[i]]
-            det.append(np.linalg.det(Q_temp))
+        for i in unlabeled_ids:
+            det.append(1+self._gini(pred[i])*np.einsum('i,ij,j',X[i], Q_inv, X[i]))
 
         det = np.array(det)
 
         # zip
         return zipit(unlabeled_ids, det)
 
-    def make_query(size = 1):
+    def make_query(self, size = 1):
 
         score = self._get_scores()
 
         return sort_by_2nd(score, 'max')[:size,0].astype(int)
+
+    def confidence(self):
+        pass

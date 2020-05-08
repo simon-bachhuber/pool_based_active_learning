@@ -25,3 +25,15 @@ def BinaryCircle():
 
     return X, y
 
+def LinearDecisionBoundary(w = np.array([1, -1])):
+
+    N = 400
+
+    np.random.seed(1)
+    X = np.random.rand(N, 2)
+
+    y = []
+    for sample in X:
+        y.append(np.sign(np.einsum('i,i', sample, w)))
+
+    return X, y 
