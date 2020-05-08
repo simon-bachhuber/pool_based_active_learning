@@ -11,3 +11,4 @@ from .rank_sampling import RankSampling
 from .class_balance_sampling import ClassBalanceSampling
 from .density_weighted_uncertainty_sampling import DensityWeightedUncertaintySampling
 from .nearest_neighbour_criterion import NearestNeighbourCriterion
+from .fisher_information_sampling import FisherInformationSampling
