@@ -158,7 +158,7 @@ vis.plot()
 
 ```
 <p align="center">
-<img src="https://github.com/SimiPixel/pool_based_active_learning/blob/master/readme_plot2.svg" width="1100">
+<img src="https://github.com/SimiPixel/pool_based_active_learning/blob/master/readme_plot2.png" width="1100">
 </p>
 
 ## Using active learning on your own classifier
