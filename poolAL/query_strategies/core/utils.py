@@ -149,3 +149,21 @@ def get_grid(X, n_grid):
         a = np.concatenate((a, arr.reshape((arr.shape+(1,)))), axis = -1)
 
     return np.apply_along_axis(lambda a: a[1:], axis = -1, arr = a)
+
+
+def replace_labels(dataset, list_of_integer_labels_to_replace_with):
+
+    d = copy.deepcopy(dataset)
+    new_l = list_of_integer_labels_to_replace_with
+    old_l = d.unique_labels()
+
+    count = -1
+    for label in old_l:
+        count += 1
+        d._y[d.get_mask_of_label(label)] = new_l[count]
+
+    # Convert to strings to ints
+    if not isinstance(d._y[0], np.int64):
+        d._y = d._y.astype(np.int64)
+
+    return d

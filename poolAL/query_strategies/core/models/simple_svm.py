@@ -1,6 +1,6 @@
 import numpy as np
 from .model import Model
-from ..utils import sort_by_2nd
+from ..utils import sort_by_2nd, replace_labels
 
 def sigma(x):
     global alpha
@@ -19,6 +19,10 @@ class SVM(Model):
 
     Parameters:
     -----------
+
+    C: Parameter for mu adaption. See References for more info.
+        Rough estimate C=12 * rate_of_wrong_labels. Suppose on average 40% of labels are incorrect, then C = 12*0.4 
+        default = 7
 
     alpha: {float}, Parameter for sigma function
         default = 10
@@ -96,8 +100,13 @@ class SVM(Model):
         '''
         dataset:
         mu: {np.array} of shape (n_samples), elements only None or 0
+            None -> always keeps in training
+            0 -> can adjust mu to suppress influence on training
 
         '''
+
+        # Convert labels to the format [1, -1]
+        dataset = replace_labels(dataset, [1, -1])
 
         self._likelihood = [-10, -5]
 
@@ -287,6 +296,9 @@ class SVM(Model):
         return np.sign(_)
 
     def score(self, dataset):
+        # Convert to [1, -1] label format
+        dataset = replace_labels(dataset, [1, -1])
+
         X, y = dataset.get_labeled_entries()
 
         pred = self.predict(X)

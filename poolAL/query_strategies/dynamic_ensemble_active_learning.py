@@ -36,6 +36,8 @@ class DynamicEnsembleActiveLearning(QueryStrategy):
 
     gamma: float (0,1], hyperparameter controlling learning rate (default = 0.1)
 
+    T: int, label budget 
+
     delta_T: int, hyperparameter: number of iterations before experts weight are reset to 1. (default = 10)
 
     alpha: float, hyperparameter for Gibbs measure (default=0.1)

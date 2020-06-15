@@ -18,6 +18,7 @@ pip install git+https://github.com/SimiPixel/pool_based_active_learning.git
   - QueryByCommittee
   - RepresentativeSampling
   - NearestNeighbourCriterion
+  - FisherInformationSampling
 - QueryStrategy object that uses a committee of QueryStrategy objects
   - RankSampling
   - ActiveLearningByLearning

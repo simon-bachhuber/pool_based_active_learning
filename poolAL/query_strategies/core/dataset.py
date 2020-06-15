@@ -79,7 +79,7 @@ class Dataset(object):
         -------
         mask: np.array of bool, shape = (n_samples,)
         '''
-        return np.fromiter((e is k for e in self._y), dtype = bool)
+        return np.fromiter((e == k for e in self._y), dtype = bool)
 
     def len_labeled(self):
         '''

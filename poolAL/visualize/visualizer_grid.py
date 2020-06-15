@@ -139,10 +139,11 @@ class VisualizerGrid:
         # Next to query
         self.query_ids = None
 
-        # Class color table
-        self.color = ['black', 'red', 'blue', 'green', 'yellow', 'orange', 'brown', 'purple', 'pink','gray', 'white']
+        # Class color, marker table
+        self.color = ['orange', 'deepskyblue', 'limegreen', 'red', 'gray', 'yellow', 'black', 'brown', 'purple', 'pink', 'green', 'blue', 'white']
+        self.marker = ['o', '^', '1', 'X', 'h', 'D', None, None, None, None, None, None, None]
 
-        # Assign each class label its color
+        # Assign each class label its color and marker
         self._y_color = self._assign_color(self._y)
 
         # Grid size per dimension
@@ -234,26 +235,48 @@ class VisualizerGrid:
 
         cmap: {string}
 
-        draw_class_labels: {int}
+        draw_class_labels: {bool}
             If True, every points color corresponds to its class membership.
             Otherwise all points are white with black edge.
             default = True
 
+        draw_colorbar: {bool}
+            default = False
+
         '''
 
-        fig, ax = plt.subplots(3,1, figsize=(10,25))
+        fig, ax = plt.subplots(1,3, figsize=(35,10))
+
+        # Set ticks
+        size = kwargs.pop('tick_size', 12)
+        xticks = kwargs.pop('xticks', [])
+        yticks = kwargs.pop('yticks', [])
+
+        for i in range(3):
+            ax[i].tick_params(labelsize = size)
+            ax[i].set_xticks(xticks)
+            ax[i].set_yticks(yticks)
 
         ##### SUBPLOT 1
 
         # Mark the labeled ones
         ax[0].scatter(self.embedded_X_samples[self.labeled_ids,0], self.embedded_X_samples[self.labeled_ids,1],
-         edgecolors='deepskyblue', c='None', s=200)
+         edgecolors='None', c='lime', s=1000)
+
+        # Mark the next in line
+        if self.query_ids is not None:
+            idx = self.query_ids[0]
+            ax[0].scatter(self.embedded_X_samples[idx,0], self.embedded_X_samples[idx, 1], c= 'red', s=1000)
 
         if draw_class_labels:
+            unique_l = np.unique(self._y)
+            for i in range(len(np.unique(self._y))):
+                mask = np.fromiter([x == unique_l[i] for x in self._y], dtype=bool)
             # Draw all
-            ax[0].scatter(self.embedded_X_samples[:,0], self.embedded_X_samples[:,1], c=self._y_color, edgecolors='black', s=40)
+                ax[0].scatter(self.embedded_X_samples[mask,0], self.embedded_X_samples[mask,1], c=self.color[i],
+                 marker = self.marker[i], edgecolors='black', s=250)
         else:
-            ax[0].scatter(self.embedded_X_samples[:,0], self.embedded_X_samples[:,1], c='white', edgecolors='black', s=40)
+            ax[0].scatter(self.embedded_X_samples[:,0], self.embedded_X_samples[:,1], c='white', edgecolors='black', s=250)
 
         xlim, ylim = ax[0].get_xlim(), ax[0].get_ylim()
 
@@ -272,11 +295,14 @@ class VisualizerGrid:
              #edgecolors='deepskyblue', c='None', s=200)
             c = ax[2].scatter(self.embedded_X_grid[:,0], self.embedded_X_grid[:,1], c=self.conf, s=40, cmap=kwargs.pop('cmap', 'winter'))
 
-            plt.colorbar(c)
+            if kwargs.pop('draw_colorbar', False):
+                plt.colorbar(c)
 
         # Set the axis limits
         for i in [1,2]:
             ax[i].set_xlim(xlim)
             ax[i].set_ylim(ylim)
 
-        # return fig
+
+
+        return fig

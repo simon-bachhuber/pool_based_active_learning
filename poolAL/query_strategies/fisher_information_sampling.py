@@ -5,7 +5,13 @@ from .core.utils import zipit, sort_by_2nd
 class FisherInformationSampling(QueryStrategy):
 
     '''
-    For now only Binary dataset.
+    Designed to be used with a classifier that uses a linear kernel function. May lead to suboptimal results otherwise.
+
+    Parameters:
+    ----------
+    dataset:
+
+    model: 
 
     References
     ----------
