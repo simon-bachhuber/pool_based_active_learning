@@ -26,15 +26,14 @@ def BinaryCircle():
 
     return X, y
 
-def data_aux_scoure(n_primary = 20, n_aux = 280, n_test = 300, acc_aux = 0.7):
+def data_aux_scoure(n_primary = 20, n_aux = 280, n_test = 300, acc_aux = 0.7, overlap = 0.1):
 
     N = int((n_primary + n_aux + n_test)/2)
 
     mean = [0, 1]
-    cov = [[0.1,0],[0,0.1]]
+    cov = [[overlap, 0],[0, overlap]]
     x1, x2 = np.random.multivariate_normal(mean, cov, N).T
     mean = [1, 0]
-    cov = [[0.1,0],[0,0.1]]
     x11, x21 = np.random.multivariate_normal(mean, cov, N).T
 
     x1 = np.hstack((x1, x11))

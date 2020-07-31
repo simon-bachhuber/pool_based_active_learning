@@ -157,10 +157,14 @@ def replace_labels(dataset, list_of_integer_labels_to_replace_with):
     new_l = list_of_integer_labels_to_replace_with
     old_l = d.unique_labels()
 
+    mask = []
     count = -1
     for label in old_l:
+        mask.append(d.get_mask_of_label(label))
+
+    for label in old_l:
         count += 1
-        d._y[d.get_mask_of_label(label)] = new_l[count]
+        d._y[mask[count]] = new_l[count]
 
     # Convert to strings to ints
     if not isinstance(d._y[0], np.int64):
