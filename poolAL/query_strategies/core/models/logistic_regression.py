@@ -13,7 +13,7 @@ class rbf_kernel:
     def calc(self, x1, x2):
         return np.exp(-self.gamma*np.sum((x1-x2)**2))
 
-class SVM(Model):
+class MLogit(Model):
     '''
     SVM with linear and rbf kernel
 
